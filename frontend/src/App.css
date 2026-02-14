@@ -1,0 +1,67 @@
+.codemirror {
+  min-height: "calc(100vh -20px)";
+  font-size: "20px";
+  line-height: "1.6";
+  padding-top: "20px";
+}
+
+/* Authentication styles */
+.auth-container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.auth-card {
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.auth-input:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+}
+
+.auth-link {
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* Loading spinner */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.compile-window {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 40%;
+  background-color: #f8f9fa;
+  box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.slide-up {
+  transform: translateY(0);
+}
+
+.slide-down {
+  transform: translateY(100%);
+}
+
+.output-box {
+  height: 150px;
+  background-color: #e9ecef;
+  padding: 10px;
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+}
