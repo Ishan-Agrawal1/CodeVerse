@@ -70,6 +70,14 @@ io.on("connection", (socket) => {
     io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
   });
 
+  socket.on(ACTIONS.CURSOR_POSITION, ({ roomId, cursorPosition }) => {
+    socket.in(roomId).emit(ACTIONS.CURSOR_UPDATE, {
+      socketId: socket.id,
+      username: userSocketMap[socket.id],
+      cursorPosition,
+    });
+  });
+
   socket.on("disconnecting", () => {
     const rooms = [...socket.rooms];
     rooms.forEach((roomId) => {

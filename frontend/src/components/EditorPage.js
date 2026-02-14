@@ -29,6 +29,7 @@ function EditorPage() {
   const [currentFile, setCurrentFile] = useState(null);
   const [showFileExplorer, setShowFileExplorer] = useState(true);
   const [workspaceInfo, setWorkspaceInfo] = useState(null);
+  const [showCursors, setShowCursors] = useState(true);
   const codeRef = useRef(null);
 
   const Location = useLocation();
@@ -319,17 +320,27 @@ function EditorPage() {
                 </button>
               )}
             </div>
-            <select
-              className="form-select w-auto"
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang}
-                </option>
-              ))}
-            </select>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                className={`btn btn-sm ${showCursors ? 'btn-info' : 'btn-outline-secondary'}`}
+                onClick={() => setShowCursors(!showCursors)}
+                title={showCursors ? 'Hide collaborative cursors' : 'Show collaborative cursors'}
+              >
+                <i className={`bi ${showCursors ? 'bi-cursor-fill' : 'bi-cursor'} me-1`}></i>
+                {showCursors ? 'Cursors On' : 'Cursors Off'}
+              </button>
+              <select
+                className="form-select w-auto"
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+              >
+                {LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <Editor
@@ -338,6 +349,7 @@ function EditorPage() {
             onCodeChange={(code) => {
               codeRef.current = code;
             }}
+            showCursors={showCursors}
           />
         </div>
       </div>
