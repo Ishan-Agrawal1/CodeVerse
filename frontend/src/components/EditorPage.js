@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Client from "./Client";
 import Editor from "./Editor";
+import FileExplorer from "./FileExplorer";
 import { initSocket } from "../Socket";
 import { ACTIONS } from "../Actions";
 import {
@@ -25,6 +26,9 @@ function EditorPage() {
   const [isCompileWindowOpen, setIsCompileWindowOpen] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("python3");
+  const [currentFile, setCurrentFile] = useState(null);
+  const [showFileExplorer, setShowFileExplorer] = useState(true);
+  const [workspaceInfo, setWorkspaceInfo] = useState(null);
   const codeRef = useRef(null);
 
   const Location = useLocation();
@@ -32,6 +36,25 @@ function EditorPage() {
   const { roomId } = useParams();
 
   const socketRef = useRef(null);
+
+  useEffect(() => {
+    fetchWorkspaceInfo();
+  }, [roomId]);
+
+  const fetchWorkspaceInfo = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:5000/api/workspaces/${roomId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setWorkspaceInfo(response.data.workspace);
+    } catch (error) {
+      console.error('Error fetching workspace info:', error);
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -98,6 +121,100 @@ function EditorPage() {
     navigate("/");
   };
 
+  const handleFileSelect = (file) => {
+    setCurrentFile(file);
+    codeRef.current = file.content || '';
+    // Force update the editor with file content
+    if (socketRef.current) {
+      // Emit to self to update the editor
+      socketRef.current.emit(ACTIONS.SYNC_CODE, {
+        code: file.content || '',
+        socketId: socketRef.current.id
+      });
+    }
+  };
+
+  const handleOpenInEditor = (file) => {
+    handleFileSelect(file);
+    toast.success(`Opened ${file.name} in editor`);
+  };
+
+  const handleSaveFile = async () => {
+    if (!currentFile) {
+      toast.error('No file is currently open');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `http://localhost:5000/api/workspaces/${roomId}/files/${currentFile.id}`,
+        {
+          content: codeRef.current,
+          language: selectedLanguage
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success('File saved successfully');
+    } catch (error) {
+      console.error('Error saving file:', error);
+      toast.error('Failed to save file');
+    }
+  };
+
+  const toggleFileExplorer = () => {
+    setShowFileExplorer(!showFileExplorer);
+  };
+
+  const handleDeleteWorkspace = async () => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to DELETE this workspace?\n\nThis will PERMANENTLY DELETE the workspace for ALL users including all files and collaborators.\n\nThis action cannot be undone!`
+    );
+    
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(
+        `http://localhost:5000/api/workspaces/${roomId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success('Workspace deleted permanently for all users');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error deleting workspace:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete workspace');
+    }
+  };
+
+  const handleLeaveWorkspace = async () => {
+    const confirmLeave = window.confirm(
+      'Are you sure you want to leave this workspace?\n\nThis will remove the workspace from your list only. Other collaborators will not be affected.\n\nYou can rejoin later if invited again.'
+    );
+    
+    if (!confirmLeave) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `http://localhost:5000/api/workspaces/${roomId}/leave`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success('You have left the workspace');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error leaving workspace:', error);
+      toast.error(error.response?.data?.error || 'Failed to leave workspace');
+    }
+  };
+
   const runCode = async () => {
     setIsCompiling(true);
     try {
@@ -122,6 +239,7 @@ function EditorPage() {
   return (
     <div className="container-fluid vh-100 d-flex flex-column">
       <div className="row flex-grow-1">
+        {/* Sidebar with tabs */}
         <div className="col-md-2 bg-dark text-light d-flex flex-column">
           <img
             src="/images/codeverse.png"
@@ -131,11 +249,37 @@ function EditorPage() {
           />
           <hr style={{ marginTop: "-1.5rem" }} />
 
-          <div className="d-flex flex-column flex-grow-1 overflow-auto">
-            <span className="mb-2">Members</span>
-            {clients.map((client) => (
-              <Client key={client.socketId} username={client.username} />
-            ))}
+          {/* Tab buttons */}
+          <div className="d-flex border-bottom border-secondary">
+            <button
+              className={`btn btn-sm flex-grow-1 ${showFileExplorer ? 'btn-primary' : 'btn-dark'}`}
+              onClick={() => setShowFileExplorer(true)}
+            >
+              Files
+            </button>
+            <button
+              className={`btn btn-sm flex-grow-1 ${!showFileExplorer ? 'btn-primary' : 'btn-dark'}`}
+              onClick={() => setShowFileExplorer(false)}
+            >
+              Members
+            </button>
+          </div>
+
+          <div className="d-flex flex-column flex-grow-1 overflow-hidden">
+            {showFileExplorer ? (
+              <FileExplorer
+                workspaceId={roomId}
+                onFileSelect={handleFileSelect}
+                onOpenInEditor={handleOpenInEditor}
+              />
+            ) : (
+              <div className="overflow-auto p-2">
+                <span className="mb-2">Members</span>
+                {clients.map((client) => (
+                  <Client key={client.socketId} username={client.username} />
+                ))}
+              </div>
+            )}
           </div>
 
           <hr />
@@ -143,14 +287,38 @@ function EditorPage() {
             <button className="btn btn-success w-100 mb-2" onClick={copyRoomId}>
               Copy Room ID
             </button>
-            <button className="btn btn-danger w-100" onClick={leaveRoom}>
-              Leave Room
+            {workspaceInfo && workspaceInfo.userRole === 'owner' ? (
+              <button className="btn btn-danger w-100 mb-2" onClick={handleDeleteWorkspace}>
+                Delete Workspace
+              </button>
+            ) : workspaceInfo && workspaceInfo.userRole !== 'owner' && (
+              <button className="btn btn-warning w-100 mb-2" onClick={handleLeaveWorkspace}>
+                Leave Workspace
+              </button>
+            )}
+            <button className="btn btn-secondary w-100" onClick={leaveRoom}>
+              Exit Editor
             </button>
           </div>
         </div>
 
         <div className="col-md-10 text-light d-flex flex-column">
-          <div className="bg-dark p-2 d-flex justify-content-end">
+          <div className="bg-dark p-2 d-flex justify-content-between align-items-center">
+            <div className="d-flex align-items-center">
+              {currentFile && (
+                <span className="me-3 text-info">
+                  📄 {currentFile.name}
+                </span>
+              )}
+              {currentFile && (
+                <button
+                  className="btn btn-sm btn-success me-2"
+                  onClick={handleSaveFile}
+                >
+                  💾 Save
+                </button>
+              )}
+            </div>
             <select
               className="form-select w-auto"
               value={selectedLanguage}

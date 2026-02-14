@@ -255,8 +255,9 @@ const deleteWorkspace = async (req, res) => {
       return res.status(403).json({ error: 'Only owner can delete workspace' });
     }
 
+    // Hard delete - CASCADE will automatically delete all related files, user_workspaces entries, and sessions
     await pool.query(
-      'UPDATE workspaces SET is_active = false WHERE id = ?',
+      'DELETE FROM workspaces WHERE id = ?',
       [workspaceId]
     );
 

@@ -10,6 +10,7 @@ require("dotenv").config();
 const { initializeDatabase } = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const workspaceRoutes = require("./routes/workspaceRoutes");
+const fileRoutes = require("./routes/fileRoutes");
 const { cleanupExpiredSessions } = require("./utils/sessionManager");
 
 const languageConfig = {
@@ -26,6 +27,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 app.use('/api/workspaces', workspaceRoutes);
+
+app.use('/api/workspaces', fileRoutes);
 
 const io = new Server(server, {
   cors: {

@@ -83,6 +83,28 @@ async function setupDatabase() {
     `);
     console.log('Sessions table created successfully');
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS workspace_files (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        workspace_id VARCHAR(36) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        type ENUM('file', 'folder') NOT NULL,
+        content LONGTEXT,
+        language VARCHAR(50),
+        parent_id INT NULL,
+        path VARCHAR(500) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_id) REFERENCES workspace_files(id) ON DELETE CASCADE,
+        INDEX idx_workspace (workspace_id),
+        INDEX idx_parent (parent_id),
+        INDEX idx_type (type),
+        UNIQUE KEY unique_workspace_path (workspace_id, path(400))
+      )
+    `);
+    console.log('Workspace files table created successfully');
+
     console.log('\nDatabase setup completed successfully!');
     console.log('You can now start the server with: npm start or node index.js');
 

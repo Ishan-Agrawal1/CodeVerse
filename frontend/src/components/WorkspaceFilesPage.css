@@ -1,0 +1,160 @@
+.workspace-files-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+}
+
+.workspace-header {
+  background-color: #fff;
+  border-bottom: 2px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.workspace-header h3 {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.workspace-content-table {
+  flex: 1;
+  padding: 20px 0;
+  background-color: #fff;
+}
+
+.files-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.files-toolbar h5 {
+  margin: 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.files-table {
+  margin-bottom: 0;
+  background-color: #fff;
+}
+
+.files-table thead {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.files-table thead th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: #6c757d;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px;
+}
+
+.file-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.file-row:hover {
+  background-color: #f8f9fa;
+}
+
+.file-row td {
+  padding: 12px;
+  vertical-align: middle;
+}
+
+.empty-files-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-files-state i {
+  opacity: 0.3;
+}
+
+.file-content-modal {
+  margin: 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  max-height: 500px;
+  overflow: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.file-content-modal code {
+  font-family: 'Courier New', Courier, monospace;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Action buttons */
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .workspace-header .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .files-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .files-table {
+    font-size: 0.875rem;
+  }
+
+  .files-table thead th {
+    padding: 8px;
+  }
+
+  .file-row td {
+    padding: 8px;
+  }
+}
+
+/* Scrollbar styling */
+.file-content-modal::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.file-content-modal::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.file-content-modal::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+.file-content-modal::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

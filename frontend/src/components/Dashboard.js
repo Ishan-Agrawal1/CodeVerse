@@ -38,7 +38,7 @@ function Dashboard() {
   };
 
   const handleWorkspaceClick = (workspaceId) => {
-    navigate(`/editor/${workspaceId}`, {
+    navigate(`/workspace/${workspaceId}`, {
       state: {
         username: user?.username,
       },
@@ -53,6 +53,52 @@ function Dashboard() {
   const handleJoinSuccess = () => {
     setShowJoinModal(false);
     fetchWorkspaces();
+  };
+
+  const handleDeleteWorkspace = async (workspaceId, workspaceName, e) => {
+    e.stopPropagation();
+    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to DELETE "${workspaceName}"?\n\nThis will PERMANENTLY DELETE the workspace for ALL users including all files and collaborators.\n\nThis action cannot be undone!`
+    );
+    
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_URL}/${workspaceId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success('Workspace deleted permanently for all users');
+      fetchWorkspaces();
+    } catch (error) {
+      console.error('Error deleting workspace:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete workspace');
+    }
+  };
+
+  const handleLeaveWorkspace = async (workspaceId, workspaceName, e) => {
+    e.stopPropagation();
+    
+    const confirmLeave = window.confirm(
+      `Are you sure you want to leave "${workspaceName}"?\n\nThis will remove the workspace from your list only. Other collaborators will not be affected.\n\nYou can rejoin later if invited again.`
+    );
+    
+    if (!confirmLeave) return;
+
+    try {
+      await axios.post(`${API_URL}/${workspaceId}/leave`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success('You have left the workspace');
+      fetchWorkspaces();
+    } catch (error) {
+      console.error('Error leaving workspace:', error);
+      toast.error(error.response?.data?.error || 'Failed to leave workspace');
+    }
   };
 
   const getRoleBadgeClass = (role) => {
@@ -152,16 +198,37 @@ function Dashboard() {
                         <i className="bi bi-clock me-1"></i>
                         {formatDate(workspace.last_accessed)}
                       </small>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleWorkspaceClick(workspace.id);
-                        }}
-                      >
-                        Open
-                        <i className="bi bi-arrow-right ms-1"></i>
-                      </button>
+                      <div className="d-flex gap-2">
+                        {workspace.role === 'owner' ? (
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={(e) => handleDeleteWorkspace(workspace.id, workspace.name, e)}
+                            title="Delete workspace permanently"
+                          >
+                            <i className="bi bi-trash me-1"></i>
+                            Delete
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-sm btn-warning"
+                            onClick={(e) => handleLeaveWorkspace(workspace.id, workspace.name, e)}
+                            title="Leave this workspace"
+                          >
+                            <i className="bi bi-box-arrow-left me-1"></i>
+                            Leave
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleWorkspaceClick(workspace.id);
+                          }}
+                        >
+                          Open
+                          <i className="bi bi-arrow-right ms-1"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
