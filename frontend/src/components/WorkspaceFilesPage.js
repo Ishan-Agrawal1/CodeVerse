@@ -20,6 +20,7 @@ function WorkspaceFilesPage() {
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState('file');
   const [newItemParent, setNewItemParent] = useState(null);
+  const [showMembersSidebar, setShowMembersSidebar] = useState(true);
 
   useEffect(() => {
     fetchWorkspaceInfo();
@@ -56,7 +57,7 @@ function WorkspaceFilesPage() {
     } catch (error) {
       console.error('Error fetching workspace info:', error);
       toast.error('Failed to load workspace');
-      navigate('/dashboard');
+      navigate('/');
     }
   };
 
@@ -221,7 +222,7 @@ function WorkspaceFilesPage() {
         }
       );
       toast.success('Workspace deleted permanently for all users');
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Error deleting workspace:', error);
       toast.error(error.response?.data?.error || 'Failed to delete workspace');
@@ -245,7 +246,7 @@ function WorkspaceFilesPage() {
         }
       );
       toast.success('You have left the workspace');
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Error leaving workspace:', error);
       toast.error(error.response?.data?.error || 'Failed to leave workspace');
@@ -326,8 +327,8 @@ function WorkspaceFilesPage() {
               <div className="d-flex align-items-center">
                 <button 
                   className="btn btn-outline-secondary me-3"
-                  onClick={() => navigate('/dashboard')}
-                  title="Back to Dashboard"
+                  onClick={() => navigate('/')}
+                  title="Back to Workspaces"
                 >
                   <i className="bi bi-arrow-left me-1"></i>
                   Back
@@ -378,32 +379,82 @@ function WorkspaceFilesPage() {
         </div>
       </div>
 
-      <div className="workspace-content-table">
-        <div className="container-fluid">
-          <div className="files-toolbar">
-            <div>
-              <h5>
-                <i className="bi bi-folder2-open me-2"></i>
-                Files & Folders
-              </h5>
+      <div className="workspace-main-content">
+        {/* Members Sidebar */}
+        {showMembersSidebar && (
+          <div className="members-sidebar">
+            <div className="members-sidebar-header">
+              <h6>
+                <i className="bi bi-people-fill me-2"></i>
+                Members ({workspaceInfo?.collaborators?.length || 0})
+              </h6>
+              <button 
+                className="btn btn-sm btn-link p-0"
+                onClick={() => setShowMembersSidebar(false)}
+                title="Hide sidebar"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
-            <div>
-              <button 
-                className="btn btn-sm btn-success me-2"
-                onClick={() => handleNewItem('file')}
-              >
-                <i className="bi bi-file-earmark-plus me-1"></i>
-                New File
-              </button>
-              <button 
-                className="btn btn-sm btn-primary"
-                onClick={() => handleNewItem('folder')}
-              >
-                <i className="bi bi-folder-plus me-1"></i>
-                New Folder
-              </button>
+            <div className="members-list">
+              {workspaceInfo?.collaborators?.map(member => (
+                <div key={member.id} className="member-item">
+                  <div className="member-info">
+                    <div className="member-avatar">
+                      <i className="bi bi-person-circle"></i>
+                    </div>
+                    <div className="member-details">
+                      <div className="member-name">{member.username}</div>
+                      <div className="member-joined">
+                        Joined {formatDate(member.joined_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`badge member-role-badge ${member.role}`}>
+                    {member.role}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
+        )}
+
+        {/* Files Content Area */}
+        <div className="workspace-content-table">
+          <div className="container-fluid">
+            <div className="files-toolbar">
+              <div>
+                <h5>
+                  <i className="bi bi-folder2-open me-2"></i>
+                  Files & Folders
+                </h5>
+              </div>
+              <div>
+                {!showMembersSidebar && (
+                  <button 
+                    className="btn btn-sm btn-outline-secondary me-2"
+                    onClick={() => setShowMembersSidebar(true)}
+                  >
+                    <i className="bi bi-people me-1"></i>
+                    Show Members
+                  </button>
+                )}
+                <button 
+                  className="btn btn-sm btn-success me-2"
+                  onClick={() => handleNewItem('file')}
+                >
+                  <i className="bi bi-file-earmark-plus me-1"></i>
+                  New File
+                </button>
+                <button 
+                  className="btn btn-sm btn-primary"
+                  onClick={() => handleNewItem('folder')}
+                >
+                  <i className="bi bi-folder-plus me-1"></i>
+                  New Folder
+                </button>
+              </div>
+            </div>
 
           {flatFiles.length === 0 ? (
             <div className="empty-files-state">
@@ -509,6 +560,7 @@ function WorkspaceFilesPage() {
           )}
         </div>
       </div>
+      </div> {/* End workspace-main-content */}
 
       {/* File View Modal */}
       {showFileModal && selectedFile && (

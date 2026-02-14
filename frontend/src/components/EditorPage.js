@@ -184,7 +184,7 @@ function EditorPage() {
         }
       );
       toast.success('Workspace deleted permanently for all users');
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Error deleting workspace:', error);
       toast.error(error.response?.data?.error || 'Failed to delete workspace');
@@ -208,7 +208,7 @@ function EditorPage() {
         }
       );
       toast.success('You have left the workspace');
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Error leaving workspace:', error);
       toast.error(error.response?.data?.error || 'Failed to leave workspace');
