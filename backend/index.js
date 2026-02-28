@@ -11,6 +11,7 @@ const { initializeDatabase } = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const workspaceRoutes = require("./routes/workspaceRoutes");
 const fileRoutes = require("./routes/fileRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const { cleanupExpiredSessions } = require("./utils/sessionManager");
 
 const languageConfig = {
@@ -29,6 +30,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/workspaces', workspaceRoutes);
 
 app.use('/api/workspaces', fileRoutes);
+
+app.use('/api/ai', aiRoutes);
 
 const io = new Server(server, {
   cors: {

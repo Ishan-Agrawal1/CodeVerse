@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "codemirror/mode/javascript/javascript";
 import "codemirror/theme/dracula.css";
 import "codemirror/addon/edit/closetag";
@@ -6,11 +6,13 @@ import "codemirror/addon/edit/closebrackets";
 import "codemirror/lib/codemirror.css";
 import CodeMirror from "codemirror";
 import { ACTIONS } from "../Actions";
+import ChatSidebar from "./ChatSidebar";
 import "./Editor.css";
 
 function Editor({ socketRef, roomId, onCodeChange, showCursors = true }) {
   const editorRef = useRef(null);
   const userCursorsRef = useRef({});
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Generate a random color for each user
   const getColorForUser = (socketId) => {
@@ -109,6 +111,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true }) {
     };
 
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle cursor visibility toggle
@@ -155,11 +158,31 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true }) {
         removeRemoteCursor(socketId);
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketRef.current]);
 
   return (
-    <div style={{ height: "600px" }}>
+    <div style={{ height: "600px", position: "relative" }}>
+      {/* AI Chat Button */}
+      <button
+        className="ai-chat-button"
+        onClick={() => setIsChatOpen(true)}
+        title="Open AI Chat Assistant"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>AI Chat</span>
+      </button>
+
       <textarea id="realtimeEditor"></textarea>
+
+      {/* Chat Sidebar */}
+      <ChatSidebar
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        workspaceId={roomId}
+      />
     </div>
   );
 }

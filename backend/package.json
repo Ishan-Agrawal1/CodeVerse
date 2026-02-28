@@ -11,6 +11,7 @@
   "author": "Yadvendra Shukla",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.7.7",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -20,6 +21,9 @@
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.16.3",
     "python-shell": "^5.0.0",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
+    "remark-gfm": "^4.0.1",
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2",
     "uuid": "^13.0.0"
