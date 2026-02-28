@@ -122,6 +122,23 @@ async function setupDatabase() {
     `);
     console.log('Chat messages table created successfully');
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user_chat_messages (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        workspace_id VARCHAR(36) NOT NULL,
+        user_id INT NOT NULL,
+        username VARCHAR(50) NOT NULL,
+        message TEXT NOT NULL,
+        timestamp TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_workspace (workspace_id),
+        INDEX idx_timestamp (timestamp)
+      )
+    `);
+    console.log('User chat messages table created successfully');
+
     console.log('\nDatabase setup completed successfully!');
     console.log('You can now start the server with: npm start or node index.js');
 

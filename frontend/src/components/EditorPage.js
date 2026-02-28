@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Client from "./Client";
 import Editor from "./Editor";
 import FileExplorer from "./FileExplorer";
+import UserChat from "./UserChat";
 import { initSocket } from "../Socket";
 import { ACTIONS } from "../Actions";
 import {
@@ -30,6 +31,7 @@ function EditorPage() {
   const [showFileExplorer, setShowFileExplorer] = useState(true);
   const [workspaceInfo, setWorkspaceInfo] = useState(null);
   const [showCursors, setShowCursors] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const codeRef = useRef(null);
 
   const Location = useLocation();
@@ -37,10 +39,6 @@ function EditorPage() {
   const { roomId } = useParams();
 
   const socketRef = useRef(null);
-
-  useEffect(() => {
-    fetchWorkspaceInfo();
-  }, [roomId]);
 
   const fetchWorkspaceInfo = async () => {
     try {
@@ -56,6 +54,11 @@ function EditorPage() {
       console.error('Error fetching workspace info:', error);
     }
   };
+
+  useEffect(() => {
+    fetchWorkspaceInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
   useEffect(() => {
     const init = async () => {
@@ -102,6 +105,7 @@ function EditorPage() {
       socketRef.current.off(ACTIONS.JOINED);
       socketRef.current.off(ACTIONS.DISCONNECTED);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!Location.state) {
@@ -165,9 +169,9 @@ function EditorPage() {
     }
   };
 
-  const toggleFileExplorer = () => {
-    setShowFileExplorer(!showFileExplorer);
-  };
+  // const toggleFileExplorer = () => {
+  //   setShowFileExplorer(!showFileExplorer);
+  // };
 
   const handleDeleteWorkspace = async () => {
     const confirmDelete = window.confirm(
@@ -361,6 +365,39 @@ function EditorPage() {
       >
         {isCompileWindowOpen ? "Close Compiler" : "Open Compiler"}
       </button>
+
+      {/* Chat toggle button */}
+      <button
+        className="btn btn-info position-fixed m-3"
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        style={{ 
+          bottom: '70px', 
+          right: '0',
+          zIndex: 1050,
+          borderRadius: '50%',
+          width: '56px',
+          height: '56px',
+          padding: '0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+        }}
+        title="Team Chat"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* User Chat Component */}
+      <UserChat 
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        workspaceId={roomId}
+        socketRef={socketRef}
+        workspaceInfo={workspaceInfo}
+      />
 
       <div
         className={`bg-dark text-light p-3 ${

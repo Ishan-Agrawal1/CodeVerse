@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import Navbar from './Navbar';
+import UserChat from './UserChat';
 import { useAuth } from '../contexts/AuthContext';
+import { initSocket } from '../Socket';
+import { ACTIONS } from '../Actions';
 import './WorkspaceFilesPage.css';
 
 function WorkspaceFilesPage() {
@@ -21,11 +24,26 @@ function WorkspaceFilesPage() {
   const [newItemType, setNewItemType] = useState('file');
   const [newItemParent, setNewItemParent] = useState(null);
   const [showMembersSidebar, setShowMembersSidebar] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     fetchWorkspaceInfo();
     fetchFiles();
+    initializeSocket();
   }, [workspaceId]);
+
+  const initializeSocket = async () => {
+    try {
+      socketRef.current = await initSocket();
+      socketRef.current.emit(ACTIONS.JOIN, {
+        roomId: workspaceId,
+        username: user?.username,
+      });
+    } catch (error) {
+      console.error('Socket connection error:', error);
+    }
+  };
 
   const fetchFiles = async () => {
     try {
@@ -346,6 +364,14 @@ function WorkspaceFilesPage() {
                       <i className="bi bi-person me-1"></i>
                       {workspaceInfo?.owner_name}
                     </span>
+              <button 
+                className="btn btn-info btn-lg me-2"
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                title="Team Chat"
+              >
+                <i className="bi bi-chat-dots me-2"></i>
+                Chat
+              </button>
                   </div>
                 </div>
               </div>
@@ -652,6 +678,14 @@ function WorkspaceFilesPage() {
         </div>
       )}
       {showNewItemModal && <div className="modal-backdrop show"></div>}
+
+      {/* User Chat Component */}
+      <UserChat 
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        workspaceId={workspaceId}
+        socketRef={socketRef}
+      />
     </div>
   );
 }
