@@ -106,6 +106,21 @@ async function setupDatabase() {
     console.log('Workspace files table created successfully');
 
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS file_save_events (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        workspace_id VARCHAR(36) NOT NULL,
+        file_id INT NOT NULL,
+        user_id INT NOT NULL,
+        saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_save_user_date (user_id, saved_at),
+        INDEX idx_save_workspace_date (workspace_id, saved_at)
+      )
+    `);
+    console.log('File save events table created successfully');
+
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS chat_messages (
         id INT PRIMARY KEY AUTO_INCREMENT,
         workspace_id VARCHAR(36) NOT NULL,

@@ -2,6 +2,7 @@ import './App.css';
 import { Routes, Route } from "react-router-dom";
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
+import MyWorkspacesPage from './components/MyWorkspacesPage';
 import EditorPage from './components/EditorPage';
 import WorkspaceFilesPage from './components/WorkspaceFilesPage';
 import Login from './components/Login';
@@ -19,9 +20,10 @@ function App() {
       <Routes>
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
-        <Route path='/' element={
+        <Route path='/' element={<Dashboard />} />
+        <Route path='/workspaces' element={
           <ProtectedRoute>
-            <Dashboard />
+            <MyWorkspacesPage />
           </ProtectedRoute>
         } />
         <Route path='/workspace/:workspaceId' element={
