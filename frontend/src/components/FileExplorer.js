@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+  import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import './FileExplorer.css';
@@ -8,14 +8,22 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [selectedFile, setSelectedFile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
-  const [showNewItemModal, setShowNewItemModal] = useState(false);
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemType, setNewItemType] = useState('file');
-  const [newItemParent, setNewItemParent] = useState(null);
+  // Inline input state (VS Code style) - null when not active
+  // { type: 'file'|'folder', parentId: null|number }
+  const [inlineInput, setInlineInput] = useState(null);
+  const [inlineInputValue, setInlineInputValue] = useState('');
+  const inlineInputRef = useRef(null);
 
   useEffect(() => {
     fetchFiles();
   }, [workspaceId]);
+
+  // Auto-focus the inline input when it appears
+  useEffect(() => {
+    if (inlineInput && inlineInputRef.current) {
+      inlineInputRef.current.focus();
+    }
+  }, [inlineInput]);
 
   const fetchFiles = async () => {
     try {
@@ -37,12 +45,10 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     const fileMap = new Map();
     const roots = [];
 
-    // First pass: create map of all files
     files.forEach(file => {
       fileMap.set(file.id, { ...file, children: [] });
     });
 
-    // Second pass: build tree structure
     files.forEach(file => {
       const node = fileMap.get(file.id);
       if (file.parent_id === null) {
@@ -69,10 +75,10 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
   };
 
   const handleFileClick = async (file) => {
+    setSelectedFile(file.id);
     if (file.type === 'folder') {
       toggleFolder(file.id);
     } else {
-      setSelectedFile(file.id);
       if (onFileSelect) {
         try {
           const token = localStorage.getItem('token');
@@ -104,44 +110,67 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     setContextMenu(null);
   };
 
-  const handleNewItem = (type, parentId = null) => {
-    setNewItemType(type);
-    setNewItemParent(parentId);
-    setNewItemName('');
-    setShowNewItemModal(true);
+  // Determine the active folder: if a folder is selected, use it; if a file is selected, use its parent
+  const getActiveParentId = () => {
+    if (selectedFile === null) return null;
+    const selected = files.find(f => f.id === selectedFile);
+    if (!selected) return null;
+    if (selected.type === 'folder') return selected.id;
+    return selected.parent_id;
+  };
+
+  const handleNewItem = (type, parentId = undefined) => {
+    // If parentId not explicitly passed, determine from selected item
+    const resolvedParentId = parentId !== undefined ? parentId : getActiveParentId();
+    // Auto-expand folder so the inline input is visible inside it
+    if (resolvedParentId !== null) {
+      setExpandedFolders(prev => new Set([...prev, resolvedParentId]));
+    }
+    setInlineInput({ type, parentId: resolvedParentId });
+    setInlineInputValue('');
     closeContextMenu();
   };
 
-  const createNewItem = async () => {
-    if (!newItemName.trim()) {
-      toast.error('Please enter a name');
+  const commitInlineInput = async () => {
+    const name = inlineInputValue.trim();
+    if (!name) {
+      setInlineInput(null);
+      setInlineInputValue('');
       return;
     }
+
+    const { type, parentId } = inlineInput;
 
     try {
       const token = localStorage.getItem('token');
       await axios.post(
         `http://localhost:5000/api/workspaces/${workspaceId}/files`,
         {
-          name: newItemName,
-          type: newItemType,
-          parentId: newItemParent,
-          content: newItemType === 'file' ? '' : null,
-          language: newItemType === 'file' ? 'javascript' : null
+          name,
+          type,
+          parentId,
+          content: type === 'file' ? '' : null,
+          language: type === 'file' ? 'javascript' : null
         },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
-      toast.success(`${newItemType === 'file' ? 'File' : 'Folder'} created successfully`);
-      setShowNewItemModal(false);
-      setNewItemName('');
+
+      toast.success(`${type === 'file' ? 'File' : 'Folder'} created successfully`);
       fetchFiles();
     } catch (error) {
       console.error('Error creating item:', error);
       toast.error(error.response?.data?.error || 'Failed to create item');
     }
+
+    setInlineInput(null);
+    setInlineInputValue('');
+  };
+
+  const cancelInlineInput = () => {
+    setInlineInput(null);
+    setInlineInputValue('');
   };
 
   const handleDelete = async (file) => {
@@ -157,7 +186,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
+
       toast.success('Deleted successfully');
       fetchFiles();
     } catch (error) {
@@ -182,7 +211,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
+
       toast.success('Renamed successfully');
       fetchFiles();
     } catch (error) {
@@ -199,42 +228,80 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     closeContextMenu();
   };
 
-  const renderFileTree = (nodes, level = 0) => {
-    return nodes.map(node => (
-      <div key={node.id} style={{ marginLeft: `${level * 20}px` }}>
-        <div
-          className={`file-item ${selectedFile === node.id ? 'selected' : ''} ${node.type === 'folder' ? 'folder' : 'file'}`}
-          onClick={() => handleFileClick(node)}
-          onContextMenu={(e) => handleContextMenu(e, node)}
-        >
+  // Renders the inline input row (VS Code style)
+  const renderInlineInput = (level) => {
+    if (!inlineInput) return null;
+    return (
+      <div style={{ marginLeft: `${level * 20}px` }}>
+        <div className="file-item inline-input-row">
           <span className="file-icon">
-            {node.type === 'folder' ? (
-              expandedFolders.has(node.id) ? '📂' : '📁'
-            ) : (
-              '📄'
-            )}
+            {inlineInput.type === 'folder' ? '📁' : '📄'}
           </span>
-          <span className="file-name">{node.name}</span>
-          {node.type === 'file' && onOpenInEditor && (
-            <button
-              className="btn-open-editor"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenInEditor(node);
-              }}
-              title="Open in Editor"
-            >
-              ✏️
-            </button>
-          )}
+          <input
+            ref={inlineInputRef}
+            className="inline-file-input"
+            type="text"
+            value={inlineInputValue}
+            onChange={(e) => setInlineInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                commitInlineInput();
+              } else if (e.key === 'Escape') {
+                cancelInlineInput();
+              }
+            }}
+            onBlur={commitInlineInput}
+            placeholder={inlineInput.type === 'folder' ? 'Folder name' : 'File name'}
+          />
         </div>
-        {node.type === 'folder' && expandedFolders.has(node.id) && node.children.length > 0 && (
-          <div className="folder-contents">
-            {renderFileTree(node.children, level + 1)}
-          </div>
-        )}
       </div>
-    ));
+    );
+  };
+
+  const renderFileTree = (nodes, level = 0, parentId = null) => {
+    return (
+      <>
+        {nodes.map(node => (
+          <div key={node.id} style={{ marginLeft: `${level * 20}px` }}>
+            <div
+              className={`file-item ${selectedFile === node.id ? 'selected' : ''} ${node.type === 'folder' ? 'folder' : 'file'}`}
+              onClick={() => handleFileClick(node)}
+              onContextMenu={(e) => handleContextMenu(e, node)}
+            >
+              <span className="file-icon">
+                {node.type === 'folder' ? (
+                  expandedFolders.has(node.id) ? '📂' : '📁'
+                ) : (
+                  '📄'
+                )}
+              </span>
+              <span className="file-name">{node.name}</span>
+              {node.type === 'file' && onOpenInEditor && (
+                <button
+                  className="btn-open-editor"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenInEditor(node);
+                  }}
+                  title="Open in Editor"
+                >
+                  ✏️
+                </button>
+              )}
+            </div>
+            {node.type === 'folder' && expandedFolders.has(node.id) && (
+              <div className="folder-contents">
+                {/* Show inline input inside this folder if it's the target parent */}
+                {inlineInput && inlineInput.parentId === node.id && renderInlineInput(level + 1)}
+                {node.children.length > 0 && renderFileTree(node.children, level + 1, node.id)}
+              </div>
+            )}
+          </div>
+        ))}
+        {/* Show inline input at root level after all root nodes */}
+        {parentId === null && inlineInput && inlineInput.parentId === null && renderInlineInput(level)}
+      </>
+    );
   };
 
   const fileTree = buildFileTree(files);
@@ -260,9 +327,9 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
           </button>
         </div>
       </div>
-      
+
       <div className="file-tree">
-        {fileTree.length === 0 ? (
+        {fileTree.length === 0 && !inlineInput ? (
           <div className="empty-state">
             <p>No files yet</p>
             <p className="text-muted">Create a file or folder to get started</p>
@@ -317,31 +384,6 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
             </div>
           </div>
         </>
-      )}
-
-      {showNewItemModal && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h5>Create New {newItemType === 'file' ? 'File' : 'Folder'}</h5>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Name"
-              value={newItemName}
-              onChange={(e) => setNewItemName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && createNewItem()}
-              autoFocus
-            />
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setShowNewItemModal(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={createNewItem}>
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
