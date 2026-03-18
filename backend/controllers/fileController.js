@@ -1,58 +1,27 @@
-const { pool } = require('../config/db');
+const fileRepository = require('../repositories/fileRepository');
+const { checkWorkspaceAccess } = require('../utils/accessControl');
+const { sendSuccess, sendError, sendCreated, sendNotFound, sendForbidden, sendBadRequest } = require('../utils/responseFormatter');
 
 const getSaveActivity = async (req, res) => {
   const userId = Number(req.user.id);
   const days = Math.min(Math.max(Number(req.query.days) || 140, 1), 365);
 
+  if (!Number.isFinite(userId)) {
+    return sendBadRequest(res, 'Invalid user context for save activity');
+  }
+
   try {
-    await pool.query(
-      `CREATE TABLE IF NOT EXISTS file_save_events (
-        id BIGINT PRIMARY KEY AUTO_INCREMENT,
-        workspace_id VARCHAR(36) NOT NULL,
-        file_id INT NOT NULL,
-        user_id INT NOT NULL,
-        saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_save_user_date (user_id, saved_at),
-        INDEX idx_save_workspace_date (workspace_id, saved_at)
-      )`
-    );
+    const rows = await fileRepository.getSaveActivity(userId, days);
 
-    const [rows] = await pool.query(
-      `SELECT DATE_FORMAT(saved_at, '%Y-%m-%d') AS save_date, COUNT(*) AS save_count
-       FROM file_save_events
-       WHERE user_id = ?
-         AND saved_at >= DATE_SUB(CURDATE(), INTERVAL ${days} DAY)
-       GROUP BY DATE_FORMAT(saved_at, '%Y-%m-%d')
-       ORDER BY save_date ASC`,
-      [userId]
-    );
-
-    let effectiveRows = rows;
-
-    if (effectiveRows.length === 0) {
-      const [workspaceRows] = await pool.query(
-        `SELECT DATE_FORMAT(fse.saved_at, '%Y-%m-%d') AS save_date, COUNT(*) AS save_count
-         FROM file_save_events fse
-         INNER JOIN user_workspaces uw ON uw.workspace_id = fse.workspace_id
-         WHERE uw.user_id = ?
-           AND fse.saved_at >= DATE_SUB(CURDATE(), INTERVAL ${days} DAY)
-         GROUP BY DATE_FORMAT(fse.saved_at, '%Y-%m-%d')
-         ORDER BY save_date ASC`,
-        [userId]
-      );
-
-      effectiveRows = workspaceRows;
-    }
-
-    const counts = effectiveRows.reduce((acc, row) => {
+    const counts = rows.reduce((acc, row) => {
       acc[row.save_date] = Number(row.save_count);
       return acc;
     }, {});
 
-    res.json({ counts, days });
+    sendSuccess(res, { counts, days });
   } catch (error) {
     console.error('Get save activity error:', error);
-    res.status(500).json({ error: 'Server error fetching save activity' });
+    sendError(res, 'Server error fetching save activity');
   }
 };
 
@@ -62,29 +31,19 @@ const getWorkspaceFiles = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Check if user has access to the workspace
-    const [access] = await pool.query(
-      'SELECT role FROM user_workspaces WHERE user_id = ? AND workspace_id = ?',
-      [userId, workspaceId]
-    );
-
-    if (access.length === 0) {
-      return res.status(403).json({ error: 'Access denied to this workspace' });
+    // Check workspace access
+    const access = await checkWorkspaceAccess(userId, workspaceId);
+    if (!access.hasAccess) {
+      return sendForbidden(res, 'Access denied to this workspace');
     }
 
     // Get all files and folders
-    const [files] = await pool.query(
-      `SELECT id, workspace_id, name, type, content, language, parent_id, path, created_at, updated_at
-       FROM workspace_files
-       WHERE workspace_id = ?
-       ORDER BY type DESC, name ASC`,
-      [workspaceId]
-    );
+    const files = await fileRepository.findByWorkspace(workspaceId);
 
-    res.json({ files });
+    sendSuccess(res, { files });
   } catch (error) {
     console.error('Get workspace files error:', error);
-    res.status(500).json({ error: 'Server error fetching files' });
+    sendError(res, 'Server error fetching files');
   }
 };
 
@@ -94,32 +53,23 @@ const getFile = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Check if user has access to the workspace
-    const [access] = await pool.query(
-      'SELECT role FROM user_workspaces WHERE user_id = ? AND workspace_id = ?',
-      [userId, workspaceId]
-    );
-
-    if (access.length === 0) {
-      return res.status(403).json({ error: 'Access denied to this workspace' });
+    // Check workspace access
+    const access = await checkWorkspaceAccess(userId, workspaceId);
+    if (!access.hasAccess) {
+      return sendForbidden(res, 'Access denied to this workspace');
     }
 
     // Get the file
-    const [files] = await pool.query(
-      `SELECT id, workspace_id, name, type, content, language, parent_id, path, created_at, updated_at
-       FROM workspace_files
-       WHERE id = ? AND workspace_id = ?`,
-      [fileId, workspaceId]
-    );
+    const file = await fileRepository.findById(fileId, workspaceId);
 
-    if (files.length === 0) {
-      return res.status(404).json({ error: 'File not found' });
+    if (!file) {
+      return sendNotFound(res, 'File not found');
     }
 
-    res.json({ file: files[0] });
+    sendSuccess(res, { file });
   } catch (error) {
     console.error('Get file error:', error);
-    res.status(500).json({ error: 'Server error fetching file' });
+    sendError(res, 'Server error fetching file');
   }
 };
 
@@ -130,66 +80,51 @@ const createFileOrFolder = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Check if user has access to the workspace and has permission to edit
-    const [access] = await pool.query(
-      'SELECT role FROM user_workspaces WHERE user_id = ? AND workspace_id = ?',
-      [userId, workspaceId]
-    );
-
-    if (access.length === 0) {
-      return res.status(403).json({ error: 'Access denied to this workspace' });
-    }
-
-    if (access[0].role === 'viewer') {
-      return res.status(403).json({ error: 'You do not have permission to create files' });
+    // Check workspace access and edit permission
+    const access = await checkWorkspaceAccess(userId, workspaceId, 'collaborator');
+    if (!access.hasAccess) {
+      return sendForbidden(res, access.role === 'viewer'
+        ? 'You do not have permission to create files'
+        : 'Access denied to this workspace');
     }
 
     // Validate required fields
     if (!name || !type || (type !== 'file' && type !== 'folder')) {
-      return res.status(400).json({ error: 'Invalid request. Name and type are required' });
+      return sendBadRequest(res, 'Invalid request. Name and type are required');
     }
 
     // Build the path
     let path = name;
     if (parentId) {
-      const [parent] = await pool.query(
-        'SELECT path FROM workspace_files WHERE id = ? AND workspace_id = ?',
-        [parentId, workspaceId]
-      );
-      
-      if (parent.length === 0) {
-        return res.status(404).json({ error: 'Parent folder not found' });
+      const parentPath = await fileRepository.getParentPath(parentId, workspaceId);
+
+      if (!parentPath) {
+        return sendNotFound(res, 'Parent folder not found');
       }
-      
-      path = `${parent[0].path}/${name}`;
+
+      path = `${parentPath}/${name}`;
     }
 
     // Create the file or folder
-    const [result] = await pool.query(
-      `INSERT INTO workspace_files (workspace_id, name, type, content, language, parent_id, path)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [workspaceId, name, type, content || null, language || null, parentId || null, path]
-    );
-
-    res.status(201).json({
-      message: `${type === 'file' ? 'File' : 'Folder'} created successfully`,
-      file: {
-        id: result.insertId,
-        workspace_id: workspaceId,
-        name,
-        type,
-        content: content || null,
-        language: language || null,
-        parent_id: parentId || null,
-        path
-      }
+    const file = await fileRepository.create({
+      workspaceId,
+      name,
+      type,
+      content,
+      language,
+      parentId,
+      path
     });
+
+    sendCreated(res, {
+      file
+    }, `${type === 'file' ? 'File' : 'Folder'} created successfully`);
   } catch (error) {
     console.error('Create file/folder error:', error);
     if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'A file or folder with this name already exists in this location' });
+      return sendBadRequest(res, 'A file or folder with this name already exists in this location');
     }
-    res.status(500).json({ error: 'Server error creating file/folder' });
+    sendError(res, 'Server error creating file/folder');
   }
 };
 
@@ -200,47 +135,28 @@ const updateFile = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Check if user has access to the workspace and has permission to edit
-    const [access] = await pool.query(
-      'SELECT role FROM user_workspaces WHERE user_id = ? AND workspace_id = ?',
-      [userId, workspaceId]
-    );
-
-    if (access.length === 0) {
-      return res.status(403).json({ error: 'Access denied to this workspace' });
-    }
-
-    if (access[0].role === 'viewer') {
-      return res.status(403).json({ error: 'You do not have permission to edit files' });
+    // Check workspace access and edit permission
+    const access = await checkWorkspaceAccess(userId, workspaceId, 'collaborator');
+    if (!access.hasAccess) {
+      return sendForbidden(res, access.role === 'viewer'
+        ? 'You do not have permission to edit files'
+        : 'Access denied to this workspace');
     }
 
     // Update the file
-    const [result] = await pool.query(
-      `UPDATE workspace_files 
-       SET content = ?, language = ?
-       WHERE id = ? AND workspace_id = ? AND type = 'file'`,
-      [content, language || null, fileId, workspaceId]
-    );
+    const updated = await fileRepository.update(fileId, workspaceId, content, language);
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'File not found' });
+    if (!updated) {
+      return sendNotFound(res, 'File not found');
     }
 
-    try {
-      await pool.query(
-        `INSERT INTO file_save_events (workspace_id, file_id, user_id)
-         VALUES (?, ?, ?)`,
-        [workspaceId, fileId, userId]
-      );
-    } catch (saveEventError) {
-      // Analytics should not break file saving flow.
-      console.warn('Save event tracking failed:', saveEventError.message);
-    }
+    // Track save event (non-blocking)
+    await fileRepository.addSaveEvent(workspaceId, fileId, userId);
 
-    res.json({ message: 'File updated successfully' });
+    sendSuccess(res, null, 'File updated successfully');
   } catch (error) {
     console.error('Update file error:', error);
-    res.status(500).json({ error: 'Server error updating file' });
+    sendError(res, 'Server error updating file');
   }
 };
 
@@ -251,76 +167,54 @@ const renameFileOrFolder = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Check if user has access to the workspace and has permission to edit
-    const [access] = await pool.query(
-      'SELECT role FROM user_workspaces WHERE user_id = ? AND workspace_id = ?',
-      [userId, workspaceId]
-    );
-
-    if (access.length === 0) {
-      return res.status(403).json({ error: 'Access denied to this workspace' });
-    }
-
-    if (access[0].role === 'viewer') {
-      return res.status(403).json({ error: 'You do not have permission to rename files' });
+    // Check workspace access and edit permission
+    const access = await checkWorkspaceAccess(userId, workspaceId, 'collaborator');
+    if (!access.hasAccess) {
+      return sendForbidden(res, access.role === 'viewer'
+        ? 'You do not have permission to rename files'
+        : 'Access denied to this workspace');
     }
 
     if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
+      return sendBadRequest(res, 'Name is required');
     }
 
     // Get current file info
-    const [files] = await pool.query(
-      'SELECT parent_id, path, type FROM workspace_files WHERE id = ? AND workspace_id = ?',
-      [fileId, workspaceId]
-    );
+    const file = await fileRepository.findById(fileId, workspaceId);
 
-    if (files.length === 0) {
-      return res.status(404).json({ error: 'File or folder not found' });
+    if (!file) {
+      return sendNotFound(res, 'File or folder not found');
     }
 
-    const file = files[0];
     const oldPath = file.path;
 
     // Build new path
     let newPath = name;
     if (file.parent_id) {
-      const [parent] = await pool.query(
-        'SELECT path FROM workspace_files WHERE id = ?',
-        [file.parent_id]
-      );
-      newPath = `${parent[0].path}/${name}`;
+      const parentPath = await fileRepository.getParentPath(file.parent_id, workspaceId);
+      newPath = `${parentPath}/${name}`;
     }
 
     // Update the file/folder name and path
-    await pool.query(
-      'UPDATE workspace_files SET name = ?, path = ? WHERE id = ?',
-      [name, newPath, fileId]
-    );
+    await fileRepository.rename(fileId, name, newPath);
 
     // If it's a folder, update all children paths
     if (file.type === 'folder') {
-      const [children] = await pool.query(
-        'SELECT id, path FROM workspace_files WHERE path LIKE ? AND workspace_id = ?',
-        [`${oldPath}/%`, workspaceId]
-      );
+      const children = await fileRepository.getChildren(oldPath, workspaceId);
 
       for (const child of children) {
         const updatedPath = child.path.replace(oldPath, newPath);
-        await pool.query(
-          'UPDATE workspace_files SET path = ? WHERE id = ?',
-          [updatedPath, child.id]
-        );
+        await fileRepository.updatePath(child.id, updatedPath);
       }
     }
 
-    res.json({ message: 'Renamed successfully' });
+    sendSuccess(res, null, 'Renamed successfully');
   } catch (error) {
     console.error('Rename file/folder error:', error);
     if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'A file or folder with this name already exists in this location' });
+      return sendBadRequest(res, 'A file or folder with this name already exists in this location');
     }
-    res.status(500).json({ error: 'Server error renaming file/folder' });
+    sendError(res, 'Server error renaming file/folder');
   }
 };
 
@@ -330,34 +224,25 @@ const deleteFileOrFolder = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    // Check if user has access to the workspace and has permission to delete
-    const [access] = await pool.query(
-      'SELECT role FROM user_workspaces WHERE user_id = ? AND workspace_id = ?',
-      [userId, workspaceId]
-    );
-
-    if (access.length === 0) {
-      return res.status(403).json({ error: 'Access denied to this workspace' });
-    }
-
-    if (access[0].role === 'viewer') {
-      return res.status(403).json({ error: 'You do not have permission to delete files' });
+    // Check workspace access and edit permission
+    const access = await checkWorkspaceAccess(userId, workspaceId, 'collaborator');
+    if (!access.hasAccess) {
+      return sendForbidden(res, access.role === 'viewer'
+        ? 'You do not have permission to delete files'
+        : 'Access denied to this workspace');
     }
 
     // Delete the file/folder (CASCADE will handle children)
-    const [result] = await pool.query(
-      'DELETE FROM workspace_files WHERE id = ? AND workspace_id = ?',
-      [fileId, workspaceId]
-    );
+    const deleted = await fileRepository.delete(fileId, workspaceId);
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'File or folder not found' });
+    if (!deleted) {
+      return sendNotFound(res, 'File or folder not found');
     }
 
-    res.json({ message: 'Deleted successfully' });
+    sendSuccess(res, null, 'Deleted successfully');
   } catch (error) {
     console.error('Delete file/folder error:', error);
-    res.status(500).json({ error: 'Server error deleting file/folder' });
+    sendError(res, 'Server error deleting file/folder');
   }
 };
 

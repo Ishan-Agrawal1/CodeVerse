@@ -2,22 +2,25 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import Activity from 'lucide-react/dist/esm/icons/activity';
-import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
-import CalendarClock from 'lucide-react/dist/esm/icons/calendar-clock';
-import Code from 'lucide-react/dist/esm/icons/code';
-import FolderKanban from 'lucide-react/dist/esm/icons/folder-kanban';
-import GitBranch from 'lucide-react/dist/esm/icons/git-branch';
-import GitCommitHorizontal from 'lucide-react/dist/esm/icons/git-commit-horizontal';
-import Globe from 'lucide-react/dist/esm/icons/globe';
-import LayoutDashboard from 'lucide-react/dist/esm/icons/layout-dashboard';
-import PlusCircle from 'lucide-react/dist/esm/icons/plus-circle';
-import Shield from 'lucide-react/dist/esm/icons/shield';
-import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
-import UserPlus from 'lucide-react/dist/esm/icons/user-plus';
+import {
+  Activity,
+  ArrowRight,
+  CalendarClock,
+  Code,
+  FolderKanban,
+  GitBranch,
+  GitCommitHorizontal,
+  Globe,
+  LayoutDashboard,
+  PlusCircle,
+  Shield,
+  Sparkles,
+  UserPlus,
+} from 'lucide-react';
 import Navbar from './Navbar';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 import JoinWorkspaceModal from './JoinWorkspaceModal';
+import Button from './ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import './Dashboard.css';
 
@@ -362,15 +365,17 @@ function Dashboard() {
               {sectionNav.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button
+                  <Button
                     key={item.id}
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     className="dashboard-sidebar__link"
                     onClick={() => handleSidebarNav(item)}
                   >
                     <Icon size={16} />
                     {item.label}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -388,25 +393,25 @@ function Dashboard() {
               <div className="dashboard-hero__actions">
                 {isAuthenticated ? (
                   <>
-                    <button className="btn dashboard-cta dashboard-cta-primary" onClick={() => setShowCreateModal(true)}>
+                    <Button className="dashboard-cta dashboard-cta-primary" onClick={() => setShowCreateModal(true)}>
                       <PlusCircle size={18} />
                       Create Workspace
-                    </button>
-                    <button className="btn dashboard-cta dashboard-cta-secondary" onClick={() => setShowJoinModal(true)}>
+                    </Button>
+                    <Button className="dashboard-cta dashboard-cta-secondary" variant="ghost" onClick={() => setShowJoinModal(true)}>
                       <UserPlus size={18} />
                       Join Workspace
-                    </button>
+                    </Button>
                   </>
                 ) : (
                   <>
-                    <button className="btn dashboard-cta dashboard-cta-primary" onClick={() => navigate('/login')}>
+                    <Button className="dashboard-cta dashboard-cta-primary" onClick={() => navigate('/login')}>
                       <ArrowRight size={18} />
                       Login
-                    </button>
-                    <button className="btn dashboard-cta dashboard-cta-secondary" onClick={() => navigate('/register')}>
+                    </Button>
+                    <Button className="dashboard-cta dashboard-cta-secondary" variant="ghost" onClick={() => navigate('/register')}>
                       <UserPlus size={18} />
                       Sign Up
-                    </button>
+                    </Button>
                   </>
                 )}
               </div>

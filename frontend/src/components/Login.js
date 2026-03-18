@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, LogIn, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -38,21 +42,23 @@ function Login() {
     <div className="container-fluid">
       <div className="row justify-content-center align-items-center min-vh-100">
         <div className="col-12 col-md-5">
-          <div className="card shadow-sm p-2 mb-5 bg-secondary rounded">
-            <div className="card-body text-center bg-dark">
+          <Card className="p-2 mb-4">
+            <CardHeader className="text-center pb-0">
               <img
                 src="/images/codeverse.png"
                 alt="Logo"
                 className="img-fluid mx-auto d-block"
                 style={{ maxWidth: '150px' }}
               />
-              <h4 className="card-title text-light mt-3 mb-4">Login to CodeVerse</h4>
-              
+              <CardTitle className="mt-3 mb-2">Login to CodeVerse</CardTitle>
+              <p className="mb-0" style={{ color: '#415A77' }}>Welcome back, continue your coding flow.</p>
+            </CardHeader>
+
+            <CardContent className="text-center pt-3">
               <form onSubmit={handleSubmit}>
                 <div className="form-group mb-3">
-                  <input
+                  <Input
                     type="email"
-                    className="form-control mb-2"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -62,9 +68,8 @@ function Login() {
                 </div>
 
                 <div className="form-group mb-3">
-                  <input
+                  <Input
                     type="password"
-                    className="form-control mb-2"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -73,31 +78,36 @@ function Login() {
                   />
                 </div>
 
-                <button
+                <Button
                   type="submit"
-                  className="btn btn-success btn-lg btn-block w-100"
+                  variant="default"
+                  size="lg"
+                  className="w-100"
                   disabled={isLoading}
                 >
+                  {isLoading ? <ShieldCheck size={18} /> : <LogIn size={18} />}
                   {isLoading ? 'Logging in...' : 'Login'}
-                </button>
+                </Button>
               </form>
 
               <div className="mt-3">
-                <span className="text-light">
+                <span style={{ color: '#1B263B' }}>
                   Don't have an account?{' '}
-                  <Link to="/register" className="text-success">
+                  <Link to="/register" style={{ color: '#415A77', fontWeight: 700 }}>
+                    <Mail size={14} className="me-1" />
                     Register here
                   </Link>
                 </span>
               </div>
 
               <div className="mt-3">
-                <Link to="/" className="text-info">
-                  ← Back to Home
+                <Link to="/" style={{ color: '#415A77', fontWeight: 600 }}>
+                  <ArrowLeft size={14} className="me-1" />
+                  Back to Home
                 </Link>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

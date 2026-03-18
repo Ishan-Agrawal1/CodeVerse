@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { DoorOpen, Home, LogOut, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Button from './ui/Button';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -19,7 +21,7 @@ function Navbar() {
   const isHome = location.pathname === '/';
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <nav className="navbar navbar-expand-lg shadow-sm" style={{ background: 'rgba(13, 27, 42, 0.9)', backdropFilter: 'blur(8px)' }}>
       <div className="container-fluid">
         <img
           src="/images/codeverse.png"
@@ -42,8 +44,8 @@ function Navbar() {
           <ul className="navbar-nav ms-auto">
             {!isHome && (
               <li className="nav-item">
-                <button className="btn btn-link nav-link" onClick={handleHome}>
-                  <i className="bi bi-house-door me-1"></i>
+                <button className="btn btn-link nav-link d-flex align-items-center gap-1 text-light" onClick={handleHome}>
+                  <Home size={16} />
                   Dashboard
                 </button>
               </li>
@@ -52,14 +54,16 @@ function Navbar() {
             {!isAuthenticated && (
               <>
                 <li className="nav-item">
-                  <button className="btn btn-outline-light me-2" onClick={() => navigate('/login')}>
+                  <Button className="me-2" variant="ghost" size="md" onClick={() => navigate('/login')}>
+                    <DoorOpen size={16} />
                     Login
-                  </button>
+                  </Button>
                 </li>
                 <li className="nav-item">
-                  <button className="btn btn-primary me-2" onClick={() => navigate('/register')}>
+                  <Button className="me-2" variant="secondary" size="md" onClick={() => navigate('/register')}>
+                    <UserCircle2 size={16} />
                     Sign Up
-                  </button>
+                  </Button>
                 </li>
               </>
             )}
@@ -77,7 +81,7 @@ function Navbar() {
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
-                    <i className="bi bi-person-circle me-1"></i>
+                    <UserCircle2 size={16} className="me-1" />
                     Account
                   </button>
                   <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -89,7 +93,7 @@ function Navbar() {
                     <li><hr className="dropdown-divider" /></li>
                     <li>
                       <button className="dropdown-item" onClick={handleLogout}>
-                        <i className="bi bi-box-arrow-right me-2"></i>
+                        <LogOut size={15} className="me-2" />
                         Logout
                       </button>
                     </li>

@@ -1,5 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { pool } = require('../config/db');
+const chatRepository = require('../repositories/chatRepository');
+const workspaceRepository = require('../repositories/workspaceRepository');
+const { sendSuccess, sendError, sendNotFound, sendForbidden, sendBadRequest } = require('../utils/responseFormatter');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -9,21 +11,11 @@ exports.sendMessage = async (req, res) => {
     const userId = req.user.id;
 
     if (!message || !workspaceId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Message and workspace ID are required' 
-      });
+      return sendBadRequest(res, 'Message and workspace ID are required');
     }
 
     // Get previous chat history for context
-    const [chatHistory] = await pool.query(
-      `SELECT message, response, role 
-       FROM chat_messages 
-       WHERE workspace_id = ? 
-       ORDER BY created_at DESC 
-       LIMIT 10`,
-      [workspaceId]
-    );
+    const chatHistory = await chatRepository.getAIChatHistory(workspaceId, 10);
 
     // Initialize the model
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -48,32 +40,25 @@ exports.sendMessage = async (req, res) => {
     const aiResponse = result.response.text();
 
     // Save user message to database
-    await pool.query(
-      `INSERT INTO chat_messages (workspace_id, user_id, message, role) 
-       VALUES (?, ?, ?, 'user')`,
-      [workspaceId, userId, message]
-    );
+    await chatRepository.createAIUserMessage({
+      workspaceId,
+      userId,
+      message
+    });
 
     // Save AI response to database
-    await pool.query(
-      `INSERT INTO chat_messages (workspace_id, user_id, message, response, role) 
-       VALUES (?, ?, ?, ?, 'assistant')`,
-      [workspaceId, userId, message, aiResponse]
-    );
-
-    res.json({
-      success: true,
-      message: 'Message sent successfully',
+    await chatRepository.createAIAssistantMessage({
+      workspaceId,
+      userId,
+      message,
       response: aiResponse
     });
 
+    sendSuccess(res, { response: aiResponse }, 'Message sent successfully');
+
   } catch (error) {
     console.error('Error in AI chat:', error.response?.data || error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get AI response',
-      error: error.message
-    });
+    sendError(res, 'Failed to get AI response');
   }
 };
 
@@ -83,41 +68,20 @@ exports.getChatHistory = async (req, res) => {
     const userId = req.user.id;
 
     // Verify user has access to workspace
-    const [workspaceAccess] = await pool.query(
-      `SELECT uw.* FROM user_workspaces uw 
-       WHERE uw.user_id = ? AND uw.workspace_id = ?`,
-      [userId, workspaceId]
-    );
+    const access = await workspaceRepository.getUserWorkspaceRole(userId, workspaceId);
 
-    if (workspaceAccess.length === 0) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have access to this workspace'
-      });
+    if (!access) {
+      return sendForbidden(res, 'You do not have access to this workspace');
     }
 
     // Get chat history
-    const [chatHistory] = await pool.query(
-      `SELECT cm.*, u.username 
-       FROM chat_messages cm
-       LEFT JOIN users u ON cm.user_id = u.id
-       WHERE cm.workspace_id = ?
-       ORDER BY cm.created_at ASC`,
-      [workspaceId]
-    );
+    const chatHistory = await chatRepository.getAIChatHistoryWithUser(workspaceId);
 
-    res.json({
-      success: true,
-      chatHistory
-    });
+    sendSuccess(res, { chatHistory });
 
   } catch (error) {
     console.error('Error fetching chat history:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch chat history',
-      error: error.message
-    });
+    sendError(res, 'Failed to fetch chat history');
   }
 };
 
@@ -126,36 +90,20 @@ exports.clearChatHistory = async (req, res) => {
     const { workspaceId } = req.params;
     const userId = req.user.id;
 
-    // Verify user is owner or has permission
-    const [workspace] = await pool.query(
-      `SELECT owner_id FROM workspaces WHERE id = ?`,
-      [workspaceId]
-    );
+    // Verify workspace exists
+    const workspace = await workspaceRepository.findById(workspaceId, false);
 
-    if (workspace.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Workspace not found'
-      });
+    if (!workspace) {
+      return sendNotFound(res, 'Workspace not found');
     }
 
     // Delete chat history
-    await pool.query(
-      `DELETE FROM chat_messages WHERE workspace_id = ?`,
-      [workspaceId]
-    );
+    await chatRepository.clearAIChatHistory(workspaceId);
 
-    res.json({
-      success: true,
-      message: 'Chat history cleared successfully'
-    });
+    sendSuccess(res, null, 'Chat history cleared successfully');
 
   } catch (error) {
     console.error('Error clearing chat history:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to clear chat history',
-      error: error.message
-    });
+    sendError(res, 'Failed to clear chat history');
   }
 };

@@ -7,19 +7,19 @@
 
 /* Authentication styles */
 .auth-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(140deg, #0d1b2a 0%, #1b263b 52%, #415a77 100%);
   min-height: 100vh;
 }
 
 .auth-card {
   backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(224, 225, 221, 0.12);
+  border: 1px solid rgba(224, 225, 221, 0.22);
 }
 
 .auth-input:focus {
-  border-color: #4caf50;
-  box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+  border-color: #778da9;
+  box-shadow: 0 0 0 0.2rem rgba(119, 141, 169, 0.24);
 }
 
 .auth-link {

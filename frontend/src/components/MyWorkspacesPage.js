@@ -2,18 +2,21 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
-import Clock3 from 'lucide-react/dist/esm/icons/clock-3';
-import Code from 'lucide-react/dist/esm/icons/code';
-import FolderKanban from 'lucide-react/dist/esm/icons/folder-kanban';
-import PlusCircle from 'lucide-react/dist/esm/icons/plus-circle';
-import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
-import UserPlus from 'lucide-react/dist/esm/icons/user-plus';
-import Users from 'lucide-react/dist/esm/icons/users';
-import UserX from 'lucide-react/dist/esm/icons/user-x';
+import {
+  ArrowRight,
+  Clock3,
+  Code,
+  FolderKanban,
+  PlusCircle,
+  Trash2,
+  UserPlus,
+  Users,
+  UserX,
+} from 'lucide-react';
 import Navbar from './Navbar';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 import JoinWorkspaceModal from './JoinWorkspaceModal';
+import Button from './ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import './Dashboard.css';
 
@@ -160,14 +163,14 @@ function MyWorkspacesPage() {
             </p>
           </div>
           <div className="dashboard-hero__actions">
-            <button className="btn dashboard-cta dashboard-cta-primary" onClick={() => setShowCreateModal(true)}>
+            <Button className="dashboard-cta dashboard-cta-primary" onClick={() => setShowCreateModal(true)}>
               <PlusCircle size={18} />
               Create Workspace
-            </button>
-            <button className="btn dashboard-cta dashboard-cta-secondary" onClick={() => setShowJoinModal(true)}>
+            </Button>
+            <Button className="dashboard-cta dashboard-cta-secondary" variant="ghost" onClick={() => setShowJoinModal(true)}>
               <UserPlus size={18} />
               Join Workspace
-            </button>
+            </Button>
           </div>
         </section>
 
@@ -177,14 +180,14 @@ function MyWorkspacesPage() {
             <h4 className="mt-3">No workspaces yet</h4>
             <p>Create a new workspace or join an existing one to get started</p>
             <div className="mt-4 d-flex flex-column flex-sm-row justify-content-center gap-3">
-              <button className="btn dashboard-cta dashboard-cta-primary" onClick={() => setShowCreateModal(true)}>
+              <Button className="dashboard-cta dashboard-cta-primary" onClick={() => setShowCreateModal(true)}>
                 <PlusCircle size={18} />
                 Create Workspace
-              </button>
-              <button className="btn dashboard-cta dashboard-cta-secondary" onClick={() => setShowJoinModal(true)}>
+              </Button>
+              <Button className="dashboard-cta dashboard-cta-secondary" variant="ghost" onClick={() => setShowJoinModal(true)}>
                 <UserPlus size={18} />
                 Join Workspace
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -216,24 +219,30 @@ function MyWorkspacesPage() {
                     </small>
                     <div className="d-flex gap-2">
                       {workspace.role === 'owner' ? (
-                        <button
-                          className="btn btn-sm btn-danger"
+                        <Button
+                          className="btn-sm"
+                          variant="destructive"
+                          size="sm"
                           onClick={(e) => handleDeleteWorkspace(workspace.id, workspace.name, e)}
                           title="Delete workspace permanently"
                         >
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       ) : (
-                        <button
-                          className="btn btn-sm btn-warning"
+                        <Button
+                          className="btn-sm"
+                          variant="secondary"
+                          size="sm"
                           onClick={(e) => handleLeaveWorkspace(workspace.id, workspace.name, e)}
                           title="Leave this workspace"
                         >
                           <UserX size={14} />
-                        </button>
+                        </Button>
                       )}
-                      <button
-                        className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                      <Button
+                        className="d-flex align-items-center gap-1"
+                        variant="default"
+                        size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleWorkspaceClick(workspace.id);
@@ -241,7 +250,7 @@ function MyWorkspacesPage() {
                       >
                         Open
                         <ArrowRight size={14} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

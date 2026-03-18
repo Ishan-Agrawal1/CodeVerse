@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, MailPlus, ShieldPlus, UserPlus2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
 
 function Register() {
   const [username, setUsername] = useState('');
@@ -50,21 +54,23 @@ function Register() {
     <div className="container-fluid">
       <div className="row justify-content-center align-items-center min-vh-100">
         <div className="col-12 col-md-5">
-          <div className="card shadow-sm p-2 mb-5 bg-secondary rounded">
-            <div className="card-body text-center bg-dark">
+          <Card className="p-2 mb-4">
+            <CardHeader className="text-center pb-0">
               <img
                 src="/images/codeverse.png"
                 alt="Logo"
                 className="img-fluid mx-auto d-block"
                 style={{ maxWidth: '150px' }}
               />
-              <h4 className="card-title text-light mt-3 mb-4">Register for CodeVerse</h4>
-              
+              <CardTitle className="mt-3 mb-2">Register for CodeVerse</CardTitle>
+              <p className="mb-0" style={{ color: '#415A77' }}>Create your account and start collaborating.</p>
+            </CardHeader>
+
+            <CardContent className="text-center pt-3">
               <form onSubmit={handleSubmit}>
                 <div className="form-group mb-3">
-                  <input
+                  <Input
                     type="text"
-                    className="form-control mb-2"
                     placeholder="Username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -74,9 +80,8 @@ function Register() {
                 </div>
 
                 <div className="form-group mb-3">
-                  <input
+                  <Input
                     type="email"
-                    className="form-control mb-2"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -86,9 +91,8 @@ function Register() {
                 </div>
 
                 <div className="form-group mb-3">
-                  <input
+                  <Input
                     type="password"
-                    className="form-control mb-2"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -98,9 +102,8 @@ function Register() {
                 </div>
 
                 <div className="form-group mb-3">
-                  <input
+                  <Input
                     type="password"
-                    className="form-control mb-2"
                     placeholder="Confirm Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -109,31 +112,36 @@ function Register() {
                   />
                 </div>
 
-                <button
+                <Button
                   type="submit"
-                  className="btn btn-success btn-lg btn-block w-100"
+                  variant="secondary"
+                  size="lg"
+                  className="w-100"
                   disabled={isLoading}
                 >
+                  {isLoading ? <ShieldPlus size={18} /> : <UserPlus2 size={18} />}
                   {isLoading ? 'Registering...' : 'Register'}
-                </button>
+                </Button>
               </form>
 
               <div className="mt-3">
-                <span className="text-light">
+                <span style={{ color: '#1B263B' }}>
                   Already have an account?{' '}
-                  <Link to="/login" className="text-success">
+                  <Link to="/login" style={{ color: '#415A77', fontWeight: 700 }}>
+                    <MailPlus size={14} className="me-1" />
                     Login here
                   </Link>
                 </span>
               </div>
 
               <div className="mt-3">
-                <Link to="/" className="text-info">
-                  ← Back to Home
+                <Link to="/" style={{ color: '#415A77', fontWeight: 600 }}>
+                  <ArrowLeft size={14} className="me-1" />
+                  Back to Home
                 </Link>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
