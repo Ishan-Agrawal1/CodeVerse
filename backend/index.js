@@ -27,9 +27,9 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 
-app.use('/api/workspaces', workspaceRoutes);
-
 app.use('/api/workspaces', fileRoutes);
+
+app.use('/api/workspaces', workspaceRoutes);
 
 app.use('/api/ai', aiRoutes);
 

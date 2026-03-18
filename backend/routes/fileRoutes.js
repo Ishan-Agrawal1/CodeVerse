@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+  getSaveActivity,
   getWorkspaceFiles,
   getFile,
   createFileOrFolder,
@@ -11,6 +12,9 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 
 router.use(protect);
+
+// Get save activity counts for dashboard heatmap
+router.get('/save-activity', getSaveActivity);
 
 // Get all files and folders for a workspace
 router.get('/:workspaceId/files', getWorkspaceFiles);

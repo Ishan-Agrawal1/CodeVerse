@@ -1,5 +1,61 @@
 const { pool } = require('../config/db');
 
+const getSaveActivity = async (req, res) => {
+  const userId = Number(req.user.id);
+  const days = Math.min(Math.max(Number(req.query.days) || 140, 1), 365);
+
+  try {
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS file_save_events (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        workspace_id VARCHAR(36) NOT NULL,
+        file_id INT NOT NULL,
+        user_id INT NOT NULL,
+        saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_save_user_date (user_id, saved_at),
+        INDEX idx_save_workspace_date (workspace_id, saved_at)
+      )`
+    );
+
+    const [rows] = await pool.query(
+      `SELECT DATE_FORMAT(saved_at, '%Y-%m-%d') AS save_date, COUNT(*) AS save_count
+       FROM file_save_events
+       WHERE user_id = ?
+         AND saved_at >= DATE_SUB(CURDATE(), INTERVAL ${days} DAY)
+       GROUP BY DATE_FORMAT(saved_at, '%Y-%m-%d')
+       ORDER BY save_date ASC`,
+      [userId]
+    );
+
+    let effectiveRows = rows;
+
+    if (effectiveRows.length === 0) {
+      const [workspaceRows] = await pool.query(
+        `SELECT DATE_FORMAT(fse.saved_at, '%Y-%m-%d') AS save_date, COUNT(*) AS save_count
+         FROM file_save_events fse
+         INNER JOIN user_workspaces uw ON uw.workspace_id = fse.workspace_id
+         WHERE uw.user_id = ?
+           AND fse.saved_at >= DATE_SUB(CURDATE(), INTERVAL ${days} DAY)
+         GROUP BY DATE_FORMAT(fse.saved_at, '%Y-%m-%d')
+         ORDER BY save_date ASC`,
+        [userId]
+      );
+
+      effectiveRows = workspaceRows;
+    }
+
+    const counts = effectiveRows.reduce((acc, row) => {
+      acc[row.save_date] = Number(row.save_count);
+      return acc;
+    }, {});
+
+    res.json({ counts, days });
+  } catch (error) {
+    console.error('Get save activity error:', error);
+    res.status(500).json({ error: 'Server error fetching save activity' });
+  }
+};
+
 // Get all files and folders for a workspace
 const getWorkspaceFiles = async (req, res) => {
   const { workspaceId } = req.params;
@@ -170,6 +226,17 @@ const updateFile = async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
+    try {
+      await pool.query(
+        `INSERT INTO file_save_events (workspace_id, file_id, user_id)
+         VALUES (?, ?, ?)`,
+        [workspaceId, fileId, userId]
+      );
+    } catch (saveEventError) {
+      // Analytics should not break file saving flow.
+      console.warn('Save event tracking failed:', saveEventError.message);
+    }
+
     res.json({ message: 'File updated successfully' });
   } catch (error) {
     console.error('Update file error:', error);
@@ -295,6 +362,7 @@ const deleteFileOrFolder = async (req, res) => {
 };
 
 module.exports = {
+  getSaveActivity,
   getWorkspaceFiles,
   getFile,
   createFileOrFolder,
