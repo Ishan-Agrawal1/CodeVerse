@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+  import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import './FileExplorer.css';
@@ -75,10 +75,10 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
   };
 
   const handleFileClick = async (file) => {
+    setSelectedFile(file.id);
     if (file.type === 'folder') {
       toggleFolder(file.id);
     } else {
-      setSelectedFile(file.id);
       if (onFileSelect) {
         try {
           const token = localStorage.getItem('token');
@@ -110,12 +110,23 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     setContextMenu(null);
   };
 
-  const handleNewItem = (type, parentId = null) => {
+  // Determine the active folder: if a folder is selected, use it; if a file is selected, use its parent
+  const getActiveParentId = () => {
+    if (selectedFile === null) return null;
+    const selected = files.find(f => f.id === selectedFile);
+    if (!selected) return null;
+    if (selected.type === 'folder') return selected.id;
+    return selected.parent_id;
+  };
+
+  const handleNewItem = (type, parentId = undefined) => {
+    // If parentId not explicitly passed, determine from selected item
+    const resolvedParentId = parentId !== undefined ? parentId : getActiveParentId();
     // Auto-expand folder so the inline input is visible inside it
-    if (parentId !== null) {
-      setExpandedFolders(prev => new Set([...prev, parentId]));
+    if (resolvedParentId !== null) {
+      setExpandedFolders(prev => new Set([...prev, resolvedParentId]));
     }
-    setInlineInput({ type, parentId });
+    setInlineInput({ type, parentId: resolvedParentId });
     setInlineInputValue('');
     closeContextMenu();
   };
