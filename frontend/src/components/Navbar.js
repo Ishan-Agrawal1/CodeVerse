@@ -21,87 +21,59 @@ function Navbar() {
   const isHome = location.pathname === '/';
 
   return (
-    <nav className="navbar navbar-expand-lg shadow-sm" style={{ background: 'rgba(13, 27, 42, 0.9)', backdropFilter: 'blur(8px)' }}>
-      <div className="container-fluid">
-        <img
-          src="/images/codeverse.png"
-          alt="Logo"
-          className="img-fluid mx-auto d-block"
-          style={{ maxWidth: '100px' }}
-        />
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            {!isHome && (
-              <li className="nav-item">
-                <button className="btn btn-link nav-link d-flex align-items-center gap-1 text-light" onClick={handleHome}>
-                  <Home size={16} />
-                  Dashboard
-                </button>
-              </li>
-            )}
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-[#0D1B2A]/90 backdrop-blur-md">
+      <div className="flex h-16 items-center justify-between px-4 md:px-8 max-w-[1600px] mx-auto">
+        
+        {/* Logo */}
+        <div className="flex items-center gap-2 cursor-pointer" onClick={handleHome}>
+          <img
+            src="/images/codeverse.png"
+            alt="Codeverse Logo"
+            className="h-8 object-contain"
+          />
+        </div>
 
-            {!isAuthenticated && (
-              <>
-                <li className="nav-item">
-                  <Button className="me-2" variant="ghost" size="md" onClick={() => navigate('/login')}>
-                    <DoorOpen size={16} />
-                    Login
-                  </Button>
-                </li>
-                <li className="nav-item">
-                  <Button className="me-2" variant="secondary" size="md" onClick={() => navigate('/register')}>
-                    <UserCircle2 size={16} />
-                    Sign Up
-                  </Button>
-                </li>
-              </>
-            )}
+        {/* Right Side Actions */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {!isHome && (
+            <button 
+              onClick={handleHome}
+              className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+            >
+              <Home size={16} />
+              <span className="hidden sm:inline">Dashboard</span>
+            </button>
+          )}
 
-            {isAuthenticated && (
-              <>
-                <li className="nav-item d-flex align-items-center text-white px-2">
-                  <small className="opacity-75">Signed in as</small>
-                  <strong className="ms-2">{user?.username || 'User'}</strong>
-                </li>
-                <li className="nav-item dropdown">
-                  <button
-                    className="btn btn-link nav-link dropdown-toggle text-white"
-                    id="userDropdown"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                  >
-                    <UserCircle2 size={16} className="me-1" />
-                    Account
-                  </button>
-                  <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li>
-                      <span className="dropdown-item-text">
-                        <small className="text-muted">{user?.email}</small>
-                      </span>
-                    </li>
-                    <li><hr className="dropdown-divider" /></li>
-                    <li>
-                      <button className="dropdown-item" onClick={handleLogout}>
-                        <LogOut size={15} className="me-2" />
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-              </>
-            )}
-          </ul>
+          {!isAuthenticated && (
+            <div className="flex items-center gap-2 sm:gap-3 ml-2 sm:ml-4 border-l border-slate-700 pl-2 sm:pl-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="text-slate-300 hover:text-white hover:bg-slate-800/50">
+                <DoorOpen size={16} className="mr-2 hidden sm:block" />
+                Login
+              </Button>
+              <Button variant="default" size="sm" onClick={() => navigate('/register')} className="bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_10px_rgba(8,145,178,0.2)]">
+                <UserCircle2 size={16} className="mr-2 hidden sm:block" />
+                Sign Up
+              </Button>
+            </div>
+          )}
+
+          {isAuthenticated && (
+            <div className="flex items-center gap-3 sm:gap-4 ml-2 sm:ml-4 border-l border-slate-700 pl-2 sm:pl-4">
+              <div className="flex items-center gap-2 text-sm text-slate-300 hidden sm:flex">
+                <UserCircle2 size={16} className="text-slate-400" />
+                <span className="opacity-75">Hey,</span>
+                <span className="font-semibold text-white truncate max-w-[120px]">{user?.username || 'User'}</span>
+              </div>
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all shadow-sm"
+              >
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

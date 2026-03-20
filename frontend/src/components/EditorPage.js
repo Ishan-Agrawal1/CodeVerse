@@ -13,6 +13,13 @@ import {
 } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import { Button } from "./ui/Button";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
+import AIChatPanel from "./AIChatPanel";
+import {
+  Terminal, Play, Save, Users, Folder, MessageSquare,
+  Settings, Bell, LogOut, Copy, Trash2, Code2, Bug, Share2
+} from "lucide-react";
 
 const LANGUAGES = [
   "python3",
@@ -129,9 +136,7 @@ function EditorPage() {
   const handleFileSelect = (file) => {
     setCurrentFile(file);
     codeRef.current = file.content || '';
-    // Force update the editor with file content
     if (socketRef.current) {
-      // Emit to self to update the editor
       socketRef.current.emit(ACTIONS.SYNC_CODE, {
         code: file.content || '',
         socketId: socketRef.current.id
@@ -169,15 +174,11 @@ function EditorPage() {
     }
   };
 
-  // const toggleFileExplorer = () => {
-  //   setShowFileExplorer(!showFileExplorer);
-  // };
-
   const handleDeleteWorkspace = async () => {
     const confirmDelete = window.confirm(
       `Are you sure you want to DELETE this workspace?\n\nThis will PERMANENTLY DELETE the workspace for ALL users including all files and collaborators.\n\nThis action cannot be undone!`
     );
-    
+
     if (!confirmDelete) return;
 
     try {
@@ -200,7 +201,7 @@ function EditorPage() {
     const confirmLeave = window.confirm(
       'Are you sure you want to leave this workspace?\n\nThis will remove the workspace from your list only. Other collaborators will not be affected.\n\nYou can rejoin later if invited again.'
     );
-    
+
     if (!confirmLeave) return;
 
     try {
@@ -222,12 +223,12 @@ function EditorPage() {
 
   const runCode = async () => {
     setIsCompiling(true);
+    setIsCompileWindowOpen(true);
     try {
       const response = await axios.post("http://localhost:5000/compile", {
         code: codeRef.current,
         language: selectedLanguage,
       });
-      console.log("Backend response:", response.data);
       setOutput(response.data.output || JSON.stringify(response.data));
     } catch (error) {
       console.error("Error compiling code:", error);
@@ -242,111 +243,145 @@ function EditorPage() {
   };
 
   return (
-    <div className="container-fluid vh-100 d-flex flex-column">
-      <div className="row flex-grow-1">
-        {/* Sidebar with tabs */}
-        <div className="col-md-2 bg-dark text-light d-flex flex-column">
-          <img
-            src="/images/codeverse.png"
-            alt="Logo"
-            className="img-fluid mx-auto"
-            style={{ maxWidth: "200px", marginTop: "-10px" }}
-          />
-          <hr style={{ marginTop: "-1.5rem" }} />
+    <div className="flex h-screen w-full bg-[#0E1117] text-slate-300 font-sans overflow-hidden">
 
-          {/* Tab buttons */}
-          <div className="d-flex border-bottom border-secondary">
-            <button
-              className={`btn btn-sm flex-grow-1 ${showFileExplorer ? 'btn-primary' : 'btn-dark'}`}
-              onClick={() => setShowFileExplorer(true)}
-            >
-              Files
-            </button>
-            <button
-              className={`btn btn-sm flex-grow-1 ${!showFileExplorer ? 'btn-primary' : 'btn-dark'}`}
-              onClick={() => setShowFileExplorer(false)}
-            >
-              Members
-            </button>
-          </div>
+      {/* Activity Bar (Far Left) */}
+      <div className="w-14 shrink-0 bg-[#0A0D14] border-r border-slate-800 flex flex-col items-center py-3 z-20">
+        <div className="w-8 h-8 mb-4">
+          <img src="/images/codeverse.png" alt="CV" className="w-full h-full object-contain" />
+        </div>
+        <div className="flex flex-col gap-2 w-full px-2">
+          <button 
+            onClick={() => setShowFileExplorer(true)} 
+            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${showFileExplorer ? 'bg-slate-800 text-cyan-400 border border-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+            title="Files"
+          >
+            <Folder className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setShowFileExplorer(false)} 
+            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${!showFileExplorer ? 'bg-slate-800 text-cyan-400 border border-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+            title="Members"
+          >
+            <Users className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isChatOpen ? 'bg-slate-800 text-purple-400 border border-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+            title="Team Chat"
+          >
+            <MessageSquare className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="mt-auto flex flex-col gap-2 w-full px-2">
+           <button className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-all" title="Settings">
+             <Settings className="w-5 h-5" />
+           </button>
+           <div className="w-10 h-10 rounded-lg flex items-center justify-center">
+             <Avatar className="w-8 h-8 border border-slate-700 cursor-pointer">
+               <AvatarFallback className="bg-purple-600 text-white font-semibold text-xs">
+                 {Location.state?.username?.charAt(0) || "U"}
+               </AvatarFallback>
+             </Avatar>
+           </div>
+        </div>
+      </div>
 
-          <div className="d-flex flex-column flex-grow-1 overflow-hidden">
-            {showFileExplorer ? (
-              <FileExplorer
-                workspaceId={roomId}
-                onFileSelect={handleFileSelect}
-                onOpenInEditor={handleOpenInEditor}
-              />
-            ) : (
-              <div className="overflow-auto p-2">
-                <span className="mb-2">Members</span>
-                {clients.map((client) => (
-                  <Client key={client.socketId} username={client.username} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <hr />
-          <div className="mt-auto mb-3">
-            <button className="btn btn-success w-100 mb-2" onClick={copyRoomId}>
-              Copy Room ID
-            </button>
-            {workspaceInfo && workspaceInfo.userRole === 'owner' ? (
-              <button className="btn btn-danger w-100 mb-2" onClick={handleDeleteWorkspace}>
-                Delete Workspace
-              </button>
-            ) : workspaceInfo && workspaceInfo.userRole !== 'owner' && (
-              <button className="btn btn-warning w-100 mb-2" onClick={handleLeaveWorkspace}>
-                Leave Workspace
-              </button>
-            )}
-            <button className="btn btn-secondary w-100" onClick={leaveRoom}>
-              Exit Editor
-            </button>
+      {/* Secondary Sidebar (Left) */}
+      <div className="w-60 shrink-0 bg-[#12151E] border-r border-slate-800 flex flex-col z-10 transition-all">
+        {/* Project Context */}
+        <div className="p-3 border-b border-slate-800 bg-slate-900/20">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-slate-300 tracking-wide uppercase">{showFileExplorer ? 'Explorer' : 'Members'}</span>
+              <span className="text-[10px] text-slate-500 truncate mt-0.5">{workspaceInfo?.name || "Workspace"}</span>
+            </div>
           </div>
         </div>
 
-        <div className="col-md-10 text-light d-flex flex-column">
-          <div className="bg-dark p-2 d-flex justify-content-between align-items-center">
-            <div className="d-flex align-items-center">
-              {currentFile && (
-                <span className="me-3 text-info">
-                  📄 {currentFile.name}
-                </span>
-              )}
-              {currentFile && (
-                <button
-                  className="btn btn-sm btn-success me-2"
-                  onClick={handleSaveFile}
-                >
-                  💾 Save
-                </button>
-              )}
+        {/* Main Content Area of Sidebar */}
+        <div className="flex-1 overflow-auto p-2">
+          {showFileExplorer ? (
+            <FileExplorer
+              workspaceId={roomId}
+              onFileSelect={handleFileSelect}
+              onOpenInEditor={handleOpenInEditor}
+            />
+          ) : (
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2 mt-2">Online ({clients.length})</span>
+              {clients.map((client) => (
+                <div key={client.socketId} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-800/50 cursor-default">
+                  <div className="relative">
+                    <Avatar className="w-6 h-6 border border-slate-700">
+                      <AvatarFallback className="bg-slate-700 text-[10px]">{client.username.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-[#12151E]"></div>
+                  </div>
+                  <span className="text-sm text-slate-300 truncate">{client.username}</span>
+                </div>
+              ))}
             </div>
-            <div className="d-flex align-items-center gap-2">
-              <button
-                className={`btn btn-sm ${showCursors ? 'btn-info' : 'btn-outline-secondary'}`}
-                onClick={() => setShowCursors(!showCursors)}
-                title={showCursors ? 'Hide collaborative cursors' : 'Show collaborative cursors'}
-              >
-                <i className={`bi ${showCursors ? 'bi-cursor-fill' : 'bi-cursor'} me-1`}></i>
-                {showCursors ? 'Cursors On' : 'Cursors Off'}
-              </button>
-              <select
-                className="form-select w-auto"
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-              >
-                {LANGUAGES.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {lang}
-                  </option>
-                ))}
-              </select>
+          )}
+        </div>
+
+        {/* Bottom Actions */}
+        <div className="p-3 border-t border-slate-800 flex flex-col gap-2 bg-slate-900/20">
+          <Button variant="outline" className="w-full justify-start text-xs border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:text-white h-8 px-2" onClick={copyRoomId}>
+            <Share2 className="w-3 h-3 mr-2 text-cyan-400" />
+            Invite
+          </Button>
+          
+          {workspaceInfo && workspaceInfo.userRole === 'owner' ? (
+            <Button variant="destructive" className="w-full text-xs shadow-none h-8 px-2" onClick={handleDeleteWorkspace}>
+              <Trash2 className="w-3 h-3 mr-2" />
+              Delete
+            </Button>
+          ) : workspaceInfo && workspaceInfo.userRole !== 'owner' && (
+            <Button variant="outline" className="w-full text-xs border-amber-900/50 text-amber-500 hover:bg-amber-900/20 hover:text-amber-400 h-8 px-2" onClick={handleLeaveWorkspace}>
+              <LogOut className="w-3 h-3 mr-2" />
+              Leave
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Center Main Editor Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[#0A0D14] border-r border-slate-800 relative z-0">
+
+        {/* Top Editor Bar */}
+        <div className="h-14 border-b border-slate-800 bg-[#12151E] flex items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-1">
+              {currentFile ? (
+                <div className="flex items-center gap-2 bg-[#0A0D14] border-t-2 border-cyan-400 px-4 py-2 text-sm text-white transition-all rounded-t-md">
+                  <Code2 className="w-4 h-4 text-cyan-400" />
+                  {currentFile.name}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
+                  Select a file
+                </div>
+              )}
             </div>
           </div>
 
+          <div className="flex items-center gap-3">
+            {currentFile && (
+              <Button size="sm" variant="ghost" onClick={handleSaveFile} className="h-8 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10">
+                <Save className="w-4 h-4 mr-2" />
+                Save
+              </Button>
+            )}
+            <Button size="sm" variant="default" onClick={runCode} disabled={isCompiling} className="h-8 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+              <Play className="w-4 h-4 mr-2" />
+              {isCompiling ? "Running..." : "Run"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Editor Container */}
+        <div className="flex-1 relative bg-[#0A0D14] overflow-hidden">
           <Editor
             socketRef={socketRef}
             roomId={roomId}
@@ -356,85 +391,97 @@ function EditorPage() {
             showCursors={showCursors}
           />
         </div>
+
+        {/* Bottom Panel Component (Terminal/Compiler Output) */}
+        {isCompileWindowOpen && (
+          <div className="h-64 border-t border-slate-800 bg-[#12151E] flex flex-col z-20">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800/50 bg-[#161B26]">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                <Terminal className="w-4 h-4 text-cyan-400" />
+                Terminal
+                <select
+                  className="ml-4 bg-transparent border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-400 outline-none focus:border-cyan-500"
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                >
+                  {LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang} className="bg-slate-900">
+                      {lang}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button size="sm" variant="ghost" onClick={toggleCompileWindow} className="h-6 px-2 text-slate-500 hover:text-white">
+                ✕
+              </Button>
+            </div>
+            <div className="flex-1 p-4 font-mono text-sm text-slate-300 overflow-auto whitespace-pre-wrap bg-[#0A0D14]">
+              <div className="text-emerald-400 mb-2">$ run script.sh</div>
+              {output || "Output will appear here after compilation"}
+            </div>
+          </div>
+        )}
+
       </div>
 
-      <button
-        className="btn btn-primary position-fixed bottom-0 end-0 m-3"
-        onClick={toggleCompileWindow}
-        style={{ zIndex: 1050 }}
-      >
-        {isCompileWindowOpen ? "Close Compiler" : "Open Compiler"}
-      </button>
+      {/* Right Sidebar */}
+      <div className="w-[340px] bg-[#12151E] border-l border-slate-800 flex flex-col z-10 shrink-0">
 
-      {/* Chat toggle button */}
-      <button
-        className="btn btn-info position-fixed m-3"
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        style={{ 
-          bottom: '70px', 
-          right: '0',
-          zIndex: 1050,
-          borderRadius: '50%',
-          width: '56px',
-          height: '56px',
-          padding: '0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-        }}
-        title="Team Chat"
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
+        {/* Right Header */}
+        <div className="h-12 shrink-0 border-b border-slate-800 flex items-center justify-between px-3 bg-[#0A0D14]">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest hidden sm:block flex-1">Workspace</span>
+          <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-2 bg-slate-800/50 rounded-full px-2 py-0.5 border border-slate-700">
+              <span className="text-[10px] font-semibold text-slate-400">Cursors</span>
+              <button
+                onClick={() => setShowCursors(!showCursors)}
+                className={`w-6 h-3 rounded-full relative transition-colors ${showCursors ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'bg-slate-600'}`}
+              >
+                <div className={`absolute top-0.5 w-2 h-2 rounded-full bg-white transition-all ${showCursors ? 'left-3.5' : 'left-0.5'}`} style={{ transform: showCursors ? 'translateX(100%)' : 'translateX(0)' }}></div>
+              </button>
+            </div>
+            <Bell className="w-4 h-4 text-slate-400 hover:text-white cursor-pointer transition-colors" />
+          </div>
+        </div>
 
-      {/* User Chat Component */}
-      <UserChat 
+        {/* Collaborators Context Box */}
+        <div className="p-3 border-b border-slate-800 shrink-0 bg-slate-900/20">
+          <span className="text-[10px] font-bold tracking-wider text-slate-500 mb-2 block uppercase">Team ({clients.length})</span>
+          <div className="flex flex-wrap gap-1.5">
+            {clients.map((client) => (
+              <Avatar key={client.socketId} className="w-6 h-6 border border-[#12151E] ring-1 ring-slate-800 hover:ring-cyan-500 transition-all cursor-pointer" title={client.username}>
+                <AvatarFallback className="bg-gradient-to-br from-slate-700 to-slate-900 text-cyan-200 text-[10px]">
+                  {client.username.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
+        </div>
+
+        {/* Full AI Chatbot */}
+        <div className="flex-1 overflow-hidden p-4">
+          <AIChatPanel workspaceId={roomId} />
+        </div>
+
+      </div>
+
+      {/* Legacy User Chat Component Overlay */}
+      <UserChat
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         workspaceId={roomId}
         socketRef={socketRef}
         workspaceInfo={workspaceInfo}
       />
-
-      <div
-        className={`bg-dark text-light p-3 ${
-          isCompileWindowOpen ? "d-block" : "d-none"
-        }`}
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: isCompileWindowOpen ? "30vh" : "0",
-          transition: "height 0.3s ease-in-out",
-          overflowY: "auto",
-          zIndex: 1040,
-        }}
-      >
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="m-0">Compiler Output ({selectedLanguage})</h5>
-          <div>
-            <button
-              className="btn btn-success me-2"
-              onClick={runCode}
-              disabled={isCompiling}
-            >
-              {isCompiling ? "Compiling..." : "Run Code"}
-            </button>
-            <button className="btn btn-secondary" onClick={toggleCompileWindow}>
-              Close
-            </button>
-          </div>
-        </div>
-        <pre className="bg-secondary p-3 rounded">
-          {output || "Output will appear here after compilation"}
-        </pre>
-      </div>
     </div>
   );
+}
+
+// Minimal missing icons
+function Bot(props) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" /></svg>
+  )
 }
 
 export default EditorPage;

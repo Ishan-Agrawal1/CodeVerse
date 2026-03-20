@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 :root {
@@ -197,4 +201,33 @@ code {
 .form-control:focus {
   border-color: var(--cv-dusk-blue);
   box-shadow: 0 0 0 0.2rem rgba(65, 90, 119, 0.18);
+}
+
+/* Global Custom Scrollbars for Windows (Neo-Cyberpunk theme) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+
+/* Utility overrides */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

@@ -1,15 +1,14 @@
 .file-explorer {
   height: 100%;
-  background-color: #1e1e1e;
-  color: #d4d4d4;
+  background-color: transparent;
+  color: #94a3b8;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #333;
 }
 
 .file-explorer-header {
   padding: 10px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #1e293b;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -20,12 +19,29 @@
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #d4d4d4;
+  letter-spacing: 0.05em;
+  color: #cbd5e1;
 }
 
 .file-explorer-actions {
   display: flex;
   gap: 5px;
+}
+
+.file-explorer-actions .btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-explorer-actions .btn:hover {
+  background: #2dd4bf;
+  color: #0f172a;
+  border-color: #2dd4bf;
 }
 
 .file-tree {
@@ -39,28 +55,31 @@
   align-items: center;
   padding: 5px 10px;
   cursor: pointer;
-  border-radius: 3px;
-  transition: background-color 0.2s;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
   user-select: none;
   position: relative;
+  font-size: 13px;
 }
 
 .file-item:hover {
-  background-color: #2a2d2e;
+  background-color: rgba(30, 41, 59, 0.6);
+  color: #f1f5f9;
 }
 
 .file-item.selected {
-  background-color: #37373d;
+  background-color: rgba(34, 211, 238, 0.1);
+  color: #22d3ee;
 }
 
 .file-icon {
   margin-right: 8px;
-  font-size: 16px;
+  font-size: 15px;
+  opacity: 0.8;
 }
 
 .file-name {
   flex: 1;
-  font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -72,7 +91,7 @@
   padding: 2px 5px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   font-size: 14px;
 }
 
@@ -81,21 +100,25 @@
 }
 
 .btn-open-editor:hover {
-  transform: scale(1.2);
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.5));
 }
 
 .folder-contents {
   margin-left: 5px;
+  border-left: 1px solid #1e293b;
+  padding-left: 5px;
 }
 
 .empty-state {
   text-align: center;
   padding: 20px;
-  color: #6a6a6a;
+  color: #64748b;
 }
 
 .empty-state p {
   margin: 5px 0;
+  font-size: 13px;
 }
 
 .context-menu-backdrop {
@@ -109,12 +132,12 @@
 
 .context-menu {
   position: fixed;
-  background-color: #252526;
-  border: 1px solid #454545;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  min-width: 150px;
+  min-width: 160px;
   padding: 4px 0;
 }
 
@@ -122,62 +145,61 @@
   padding: 8px 16px;
   cursor: pointer;
   font-size: 13px;
+  color: #cbd5e1;
   transition: background-color 0.2s;
 }
 
 .context-menu-item:hover {
-  background-color: #2a2d2e;
+  background-color: #334155;
+  color: #f8fafc;
 }
 
 .context-menu-item.danger {
-  color: #f48771;
+  color: #f43f5e;
 }
 
 .context-menu-item.danger:hover {
-  background-color: #5a1d1d;
+  background-color: rgba(244, 63, 94, 0.1);
 }
 
-/* Inline input (VS Code style) */
 .inline-input-row {
   cursor: default;
 }
 
 .inline-file-input {
   flex: 1;
-  background-color: #3c3c3c;
-  border: 1px solid #007acc;
-  color: #d4d4d4;
+  background-color: #0f172a;
+  border: 1px solid #22d3ee;
+  color: #f1f5f9;
   font-size: 13px;
   padding: 2px 6px;
-  border-radius: 2px;
+  border-radius: 3px;
   outline: none;
   font-family: inherit;
   min-width: 0;
 }
 
 .inline-file-input:focus {
-  border-color: #007acc;
-  box-shadow: 0 0 0 1px rgba(0, 122, 204, 0.4);
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
 }
 
 .inline-file-input::placeholder {
-  color: #6a6a6a;
+  color: #475569;
 }
 
-/* Scrollbar styling */
 .file-tree::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .file-tree::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: transparent;
 }
 
 .file-tree::-webkit-scrollbar-thumb {
-  background: #424242;
+  background: #334155;
   border-radius: 4px;
 }
 
 .file-tree::-webkit-scrollbar-thumb:hover {
-  background: #4e4e4e;
+  background: #475569;
 }
