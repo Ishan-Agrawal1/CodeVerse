@@ -1,5 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import "codemirror/mode/javascript/javascript";
+import "codemirror/mode/python/python";
+import "codemirror/mode/clike/clike";
+import "codemirror/mode/ruby/ruby";
+import "codemirror/mode/go/go";
+import "codemirror/mode/rust/rust";
+import "codemirror/mode/php/php";
+import "codemirror/mode/sql/sql";
+import "codemirror/mode/swift/swift";
+import "codemirror/mode/r/r";
 import "codemirror/theme/dracula.css";
 import "codemirror/addon/edit/closetag";
 import "codemirror/addon/edit/closebrackets";
@@ -9,7 +18,25 @@ import { ACTIONS } from "../Actions";
 import ChatSidebar from "./ChatSidebar";
 import "./Editor.css";
 
-function Editor({ socketRef, roomId, onCodeChange, showCursors = true }) {
+// Map JDoodle language names to CodeMirror MIME types
+const LANGUAGE_TO_CM_MODE = {
+  python3: 'text/x-python',
+  java: 'text/x-java',
+  cpp: 'text/x-c++src',
+  c: 'text/x-csrc',
+  nodejs: 'text/javascript',
+  ruby: 'text/x-ruby',
+  go: 'text/x-go',
+  rust: 'text/x-rustsrc',
+  php: 'application/x-httpd-php',
+  swift: 'text/x-swift',
+  kotlin: 'text/x-kotlin',
+  scala: 'text/x-scala',
+  r: 'text/x-rsrc',
+  sql: 'text/x-sql',
+};
+
+function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language = 'python3', fontSize = 14, wordWrap = true }) {
   const editorRef = useRef(null);
   const userCursorsRef = useRef({});
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -71,19 +98,22 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true }) {
 
   useEffect(() => {
     const init = async () => {
+      const cmMode = LANGUAGE_TO_CM_MODE[language] || 'text/javascript';
       const editor = CodeMirror.fromTextArea(
         document.getElementById("realtimeEditor"),
         {
-          mode: { name: "javascript", json: true },
+          mode: cmMode,
           theme: "dracula",
           autoCloseTags: true,
           autoCloseBrackets: true,
           lineNumbers: true,
+          lineWrapping: wordWrap,
         }
       );
       editorRef.current = editor;
 
       editor.setSize(null, "100%");
+      editor.getWrapperElement().style.fontSize = fontSize + 'px';
       
       // Track code changes
       editorRef.current.on("change", (instance, changes) => {
@@ -113,6 +143,29 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true }) {
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Dynamically update CodeMirror mode when language changes
+  useEffect(() => {
+    if (editorRef.current) {
+      const cmMode = LANGUAGE_TO_CM_MODE[language] || 'text/javascript';
+      editorRef.current.setOption('mode', cmMode);
+    }
+  }, [language]);
+
+  // Dynamically update font size
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.getWrapperElement().style.fontSize = fontSize + 'px';
+      editorRef.current.refresh();
+    }
+  }, [fontSize]);
+
+  // Dynamically update word wrap
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.setOption('lineWrapping', wordWrap);
+    }
+  }, [wordWrap]);
 
   // Handle cursor visibility toggle
   useEffect(() => {
