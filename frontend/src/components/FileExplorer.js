@@ -1,6 +1,7 @@
   import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+  import { File, FilePlus, Folder, FolderOpen, FolderPlus, Pencil } from 'lucide-react';
 import './FileExplorer.css';
 
 const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
@@ -234,8 +235,8 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     return (
       <div style={{ marginLeft: `${level * 20}px` }}>
         <div className="file-item inline-input-row">
-          <span className="file-icon">
-            {inlineInput.type === 'folder' ? '📁' : '📄'}
+          <span className={`file-icon ${inlineInput.type === 'folder' ? 'is-folder' : 'is-file'}`}>
+            {inlineInput.type === 'folder' ? <Folder size={15} /> : <File size={15} />}
           </span>
           <input
             ref={inlineInputRef}
@@ -268,24 +269,24 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
               onClick={() => handleFileClick(node)}
               onContextMenu={(e) => handleContextMenu(e, node)}
             >
-              <span className="file-icon">
+              <span className={`file-icon ${node.type === 'folder' ? 'is-folder' : 'is-file'} ${node.type === 'folder' && expandedFolders.has(node.id) ? 'is-open' : ''}`}>
                 {node.type === 'folder' ? (
-                  expandedFolders.has(node.id) ? '📂' : '📁'
+                  expandedFolders.has(node.id) ? <FolderOpen size={15} /> : <Folder size={15} />
                 ) : (
-                  '📄'
+                  <File size={15} />
                 )}
               </span>
               <span className="file-name">{node.name}</span>
               {node.type === 'file' && onOpenInEditor && (
                 <button
-                  className="btn-open-editor"
+                  className="btn-open-editor action-icon"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleOpenInEditor(node);
                   }}
                   title="Open in Editor"
                 >
-                  ✏️
+                  <Pencil size={14} />
                 </button>
               )}
             </div>
@@ -316,14 +317,14 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
             onClick={() => handleNewItem('file')}
             title="New File"
           >
-            📄+
+            <FilePlus size={16} className="file-action-icon" />
           </button>
           <button
             className="btn btn-sm btn-primary"
             onClick={() => handleNewItem('folder')}
             title="New Folder"
           >
-            📁+
+            <FolderPlus size={16} className="file-action-icon" />
           </button>
         </div>
       </div>

@@ -39,9 +39,9 @@
 }
 
 .file-explorer-actions .btn:hover {
-  background: #2dd4bf;
-  color: #0f172a;
-  border-color: #2dd4bf;
+  background: #243449;
+  color: #cbd5e1;
+  border-color: #3c546f;
 }
 
 .file-tree {
@@ -74,8 +74,35 @@
 
 .file-icon {
   margin-right: 8px;
-  font-size: 15px;
   opacity: 0.8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #a8b6c9;
+}
+
+.file-icon.is-folder {
+  color: #fbbf24;
+}
+
+.file-icon.is-folder.is-open {
+  color: #f59e0b;
+}
+
+.file-icon.is-file {
+  color: #94a3b8;
+}
+
+.file-item:hover .file-icon.is-folder {
+  color: #fcd34d;
+}
+
+.file-item:hover .file-icon.is-file {
+  color: #cbd5e1;
+}
+
+.file-icon svg {
+  display: block;
 }
 
 .file-name {
@@ -92,7 +119,10 @@
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
-  font-size: 14px;
+  color: #9fb2c8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .file-item:hover .btn-open-editor {
@@ -101,7 +131,22 @@
 
 .btn-open-editor:hover {
   transform: scale(1.1);
+  color: #22d3ee;
   filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.5));
+}
+
+.file-action-icon {
+  display: block;
+  color: #9fb2c8;
+  transition: color 0.2s ease;
+}
+
+.file-explorer-actions .btn:hover .file-action-icon {
+  color: #22d3ee;
+}
+
+.action-icon {
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .folder-contents {

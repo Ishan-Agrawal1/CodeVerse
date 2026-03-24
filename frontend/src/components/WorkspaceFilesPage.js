@@ -2,12 +2,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import {
+  ArrowLeft,
+  Copy,
+  MessageSquare,
+  Code2,
+  Trash2,
+  FilePlus,
+  FolderPlus,
+  Upload,
+  RefreshCw,
+  Folder,
+  FileText,
+  UserPlus,
+  HelpCircle,
+  Activity,
+  CheckCircle2,
+  List,
+  Grid,
+  Pencil
+} from 'lucide-react';
 import Navbar from './Navbar';
 import UserChat from './UserChat';
 import { useAuth } from '../contexts/AuthContext';
 import { initSocket } from '../Socket';
 import { ACTIONS } from '../Actions';
-import './WorkspaceFilesPage.css';
 
 function WorkspaceFilesPage() {
   const { workspaceId } = useParams();
@@ -23,7 +42,6 @@ function WorkspaceFilesPage() {
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState('file');
   const [newItemParent, setNewItemParent] = useState(null);
-  const [showMembersSidebar, setShowMembersSidebar] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const socketRef = useRef(null);
 
@@ -77,6 +95,11 @@ function WorkspaceFilesPage() {
       toast.error('Failed to load workspace');
       navigate('/');
     }
+  };
+
+  const copyWorkspaceId = () => {
+    navigator.clipboard.writeText(workspaceId);
+    toast.success('Workspace ID copied to clipboard');
   };
 
   const handleFileSelect = (file) => {
@@ -159,7 +182,7 @@ function WorkspaceFilesPage() {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
+
       toast.success(`${newItemType === 'file' ? 'File' : 'Folder'} created successfully`);
       setShowNewItemModal(false);
       setNewItemName('');
@@ -170,7 +193,8 @@ function WorkspaceFilesPage() {
     }
   };
 
-  const handleDelete = async (file) => {
+  const handleDelete = async (file, e) => {
+    if (e) e.stopPropagation();
     if (!window.confirm(`Are you sure you want to delete ${file.name}?`)) {
       return;
     }
@@ -183,7 +207,7 @@ function WorkspaceFilesPage() {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
+
       toast.success('Deleted successfully');
       fetchFiles();
     } catch (error) {
@@ -192,22 +216,18 @@ function WorkspaceFilesPage() {
     }
   };
 
-  const handleRename = async (file) => {
+  const handleRename = async (file, e) => {
+    if (e) e.stopPropagation();
     const newName = prompt('Enter new name:', file.name);
-    if (!newName || newName === file.name) {
-      return;
-    }
+    if (!newName || newName === file.name) return;
 
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
         `http://localhost:5000/api/workspaces/${workspaceId}/files/${file.id}/rename`,
         { name: newName },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
       toast.success('Renamed successfully');
       fetchFiles();
     } catch (error) {
@@ -228,7 +248,7 @@ function WorkspaceFilesPage() {
     const confirmDelete = window.confirm(
       `Are you sure you want to DELETE this workspace?\n\nThis will PERMANENTLY DELETE the workspace for ALL users including all files and collaborators.\n\nThis action cannot be undone!`
     );
-    
+
     if (!confirmDelete) return;
 
     try {
@@ -247,85 +267,40 @@ function WorkspaceFilesPage() {
     }
   };
 
-  const handleLeaveWorkspace = async () => {
-    const confirmLeave = window.confirm(
-      'Are you sure you want to leave this workspace?\n\nThis will remove the workspace from your list only. Other collaborators will not be affected.\n\nYou can rejoin later if invited again.'
-    );
-    
-    if (!confirmLeave) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `http://localhost:5000/api/workspaces/${workspaceId}/leave`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      toast.success('You have left the workspace');
-      navigate('/');
-    } catch (error) {
-      console.error('Error leaving workspace:', error);
-      toast.error(error.response?.data?.error || 'Failed to leave workspace');
-    }
-  };
-
-  const getRoleBadgeClass = (role) => {
-    switch (role) {
-      case 'owner':
-        return 'badge bg-primary';
-      case 'collaborator':
-        return 'badge bg-success';
-      case 'viewer':
-        return 'badge bg-secondary';
-      default:
-        return 'badge bg-info';
-    }
-  };
-
-  const getLanguageForSyntax = (language) => {
-    const languageMap = {
-      'javascript': 'javascript',
-      'python': 'python',
-      'python3': 'python',
-      'java': 'java',
-      'cpp': 'cpp',
-      'c': 'c',
-      'html': 'html',
-      'css': 'css',
-      'json': 'json',
-    };
-    return languageMap[language] || 'plaintext';
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const formatFileSize = (content) => {
-    if (!content) return '0 KB';
+    if (!content) return '--';
     const bytes = new Blob([content]).size;
+    if (bytes === 0) return '--';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
+  
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    const diffMinutes = Math.floor(diff / 60000);
+    const diffHours = Math.floor(diff / 3600000);
+    const diffDays = Math.floor(diff / 86400000);
+
+    if (diffMinutes < 60) return `${diffMinutes} mins ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   if (loading) {
     return (
-      <div>
+      <div className="flex min-h-screen flex-col bg-[#0A1118]">
         <Navbar />
-        <div className="d-flex justify-content-center align-items-center min-vh-100">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+        <div className="flex h-[calc(100vh-64px)] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
         </div>
       </div>
     );
@@ -335,352 +310,361 @@ function WorkspaceFilesPage() {
   const flatFiles = flattenFileTree(fileTree);
 
   return (
-    <div className="workspace-files-page">
+    <div className="flex min-h-screen flex-col bg-[#0A1118]">
       <Navbar />
-      
-      <div className="workspace-header">
-        <div className="container-fluid py-3">
-          <div className="row align-items-center">
-            <div className="col-md-6">
-              <div className="d-flex align-items-center">
-                <button 
-                  className="btn btn-outline-secondary me-3"
-                  onClick={() => navigate('/')}
-                  title="Back to Workspaces"
-                >
-                  <i className="bi bi-arrow-left me-1"></i>
-                  Back
-                </button>
-                <div>
-                  <h3 className="mb-1">{workspaceInfo?.name}</h3>
-                  <div>
-                    <span className={getRoleBadgeClass(workspaceInfo?.userRole)}>
-                      {workspaceInfo?.userRole}
-                    </span>
-                    <span className="badge bg-light text-dark ms-2">
-                      {workspaceInfo?.language}
-                    </span>
-                    <span className="text-muted ms-2">
-                      <i className="bi bi-person me-1"></i>
-                      {workspaceInfo?.owner_name}
-                    </span>
-              <button 
-                className="btn btn-info btn-lg me-2"
-                onClick={() => setIsChatOpen(!isChatOpen)}
-                title="Team Chat"
-              >
-                <i className="bi bi-chat-dots me-2"></i>
-                Chat
-              </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 text-end">
-              <button 
-                className="btn btn-primary btn-lg me-2"
-                onClick={handleOpenEditor}
-                title="Open collaborative code editor for real-time editing"
-              >
-                <i className="bi bi-code-slash me-2"></i>
-                Open Editor
-              </button>
-              {workspaceInfo?.userRole === 'owner' ? (
-                <button 
-                  className="btn btn-outline-danger"
-                  onClick={handleDeleteWorkspace}
-                >
-                  <i className="bi bi-trash"></i>
-                </button>
-              ) : (
-                <button 
-                  className="btn btn-outline-warning"
-                  onClick={handleLeaveWorkspace}
-                >
-                  <i className="bi bi-box-arrow-left"></i>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="workspace-main-content">
-        {/* Members Sidebar */}
-        {showMembersSidebar && (
-          <div className="members-sidebar">
-            <div className="members-sidebar-header">
-              <h6>
-                <i className="bi bi-people-fill me-2"></i>
-                Members ({workspaceInfo?.collaborators?.length || 0})
-              </h6>
-              <button 
-                className="btn btn-sm btn-link p-0"
-                onClick={() => setShowMembersSidebar(false)}
-                title="Hide sidebar"
-              >
-                <i className="bi bi-x-lg"></i>
-              </button>
-            </div>
-            <div className="members-list">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <aside className="hidden w-64 flex-col border-r border-slate-800/60 bg-[#111C28] md:flex">
+          <div className="p-6">
+            <h2 className="mb-6 text-xs font-bold uppercase tracking-widest text-slate-500">
+              Workspace Members
+            </h2>
+            
+            <div className="space-y-4">
               {workspaceInfo?.collaborators?.map(member => (
-                <div key={member.id} className="member-item">
-                  <div className="member-info">
-                    <div className="member-avatar">
-                      <i className="bi bi-person-circle"></i>
-                    </div>
-                    <div className="member-details">
-                      <div className="member-name">{member.username}</div>
-                      <div className="member-joined">
-                        Joined {formatDate(member.joined_at)}
-                      </div>
-                    </div>
+                <div key={member.id} className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-sm font-semibold text-slate-300">
+                    {member.username.charAt(0).toUpperCase()}
                   </div>
-                  <span className={`badge member-role-badge ${member.role}`}>
-                    {member.role}
-                  </span>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="truncate text-sm font-medium text-slate-200">{member.username}</div>
+                    <div className="text-xs text-slate-500">{member.role}</div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
 
-        {/* Files Content Area */}
-        <div className="workspace-content-table">
-          <div className="container-fluid">
-            <div className="files-toolbar">
-              <div>
-                <h5>
-                  <i className="bi bi-folder2-open me-2"></i>
-                  Files & Folders
-                </h5>
-              </div>
-              <div>
-                {!showMembersSidebar && (
-                  <button 
-                    className="btn btn-sm btn-outline-secondary me-2"
-                    onClick={() => setShowMembersSidebar(true)}
-                  >
-                    <i className="bi bi-people me-1"></i>
-                    Show Members
-                  </button>
-                )}
-                <button 
-                  className="btn btn-sm btn-success me-2"
-                  onClick={() => handleNewItem('file')}
-                >
-                  <i className="bi bi-file-earmark-plus me-1"></i>
-                  New File
-                </button>
-                <button 
-                  className="btn btn-sm btn-primary"
-                  onClick={() => handleNewItem('folder')}
-                >
-                  <i className="bi bi-folder-plus me-1"></i>
-                  New Folder
-                </button>
-              </div>
-            </div>
+          <div className="mt-auto border-t border-slate-800/60 p-4">
+            <button className="flex w-full items-center justify-center gap-2 rounded-md bg-slate-800/50 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white">
+              <UserPlus size={16} />
+              Invite Member
+            </button>
+            <button className="mt-4 flex w-full items-center justify-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-300">
+              <HelpCircle size={16} />
+              Support
+            </button>
+          </div>
+        </aside>
 
-          {flatFiles.length === 0 ? (
-            <div className="empty-files-state">
-              <i className="bi bi-folder2-open" style={{ fontSize: '4rem', color: '#ccc' }}></i>
-              <h4 className="mt-3 text-muted">No files yet</h4>
-              <p className="text-muted">Create a file or folder to get started</p>
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+          <div className="mx-auto max-w-[1200px]">
+            {/* Header Section */}
+            <div className="mb-8">
               <button 
-                className="btn btn-primary mt-2"
-                onClick={() => handleNewItem('file')}
+                onClick={() => navigate('/workspaces')}
+                className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500 transition-colors hover:text-slate-300"
               >
-                <i className="bi bi-file-earmark-plus me-2"></i>
-                Create Your First File
+                <ArrowLeft size={16} />
+                Back to Workspaces
               </button>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="table table-hover files-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '50%' }}>Name</th>
-                    <th style={{ width: '15%' }}>Type</th>
-                    <th style={{ width: '15%' }}>Size</th>
-                    <th style={{ width: '15%' }}>Modified</th>
-                    <th style={{ width: '5%' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {flatFiles.map(file => (
-                    <tr 
-                      key={file.id}
-                      className="file-row"
-                      onClick={() => handleFileSelect(file)}
+              
+              <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+                <div>
+                  <h1 className="mb-2 text-3xl font-bold tracking-tight text-white md:text-4xl">
+                    Workspace: <span className="text-slate-400">{workspaceInfo?.name}</span>
+                  </h1>
+                  <div className="flex items-center gap-4 text-sm text-slate-400">
+                    <div className="flex items-center gap-2 rounded-md bg-[#162436] px-3 py-1">
+                      <span>ID: {workspaceId.substring(0, 12)}</span>
+                      <button onClick={copyWorkspaceId} className="hover:text-white" title="Copy ID">
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                      Active Instance
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => setIsChatOpen(true)}
+                    className="flex items-center gap-2 rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700 hover:text-white"
+                  >
+                    <MessageSquare size={16} />
+                    Open Chat
+                  </button>
+                  <button
+                    onClick={handleOpenEditor}
+                    className="flex items-center gap-2 rounded-md bg-slate-200 px-4 py-2 text-sm font-bold text-slate-900 transition-colors hover:bg-white"
+                  >
+                    <Code2 size={16} />
+                    Open Editor
+                  </button>
+                  {workspaceInfo?.userRole === 'owner' && (
+                    <button
+                      onClick={handleDeleteWorkspace}
+                      className="ml-auto flex items-center gap-2 rounded-md bg-red-950/40 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-900/60 lg:ml-2"
                     >
-                      <td>
-                        <div style={{ paddingLeft: `${file.level * 30}px` }} className="d-flex align-items-center">
-                          {file.type === 'folder' ? (
-                            <>
-                              <i className={`bi ${expandedFolders.has(file.id) ? 'bi-folder2-open' : 'bi-folder2'} me-2 text-warning`}></i>
-                              <strong>{file.name}</strong>
-                            </>
-                          ) : (
-                            <>
-                              <i className="bi bi-file-earmark-text me-2 text-primary"></i>
-                              {file.name}
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        {file.type === 'folder' ? (
-                          <span className="badge bg-secondary">Folder</span>
-                        ) : (
-                          <span className="badge bg-info">{file.language || 'File'}</span>
-                        )}
-                      </td>
-                      <td>
-                        {file.type === 'file' ? formatFileSize(file.content) : '-'}
-                      </td>
-                      <td className="text-muted small">
-                        {formatDate(file.updated_at)}
-                      </td>
-                      <td>
-                        <div className="btn-group btn-group-sm" onClick={(e) => e.stopPropagation()}>
-                          {file.type === 'folder' && (
-                            <>
-                              <button 
-                                className="btn btn-outline-secondary"
-                                onClick={() => handleNewItem('file', file.id)}
-                                title="New file in folder"
-                              >
-                                <i className="bi bi-file-earmark-plus"></i>
-                              </button>
-                              <button 
-                                className="btn btn-outline-secondary"
-                                onClick={() => handleNewItem('folder', file.id)}
-                                title="New folder"
-                              >
-                                <i className="bi bi-folder-plus"></i>
-                              </button>
-                            </>
-                          )}
-                          <button 
-                            className="btn btn-outline-primary"
-                            onClick={() => handleRename(file)}
-                            title="Rename"
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </button>
-                          <button 
-                            className="btn btn-outline-danger"
-                            onClick={() => handleDelete(file)}
-                            title="Delete"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      Delete Workspace
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* File Explorer Card */}
+            <div className="mb-8 min-h-[480px] rounded-xl border border-slate-800/60 bg-[#111C28] overflow-hidden">
+              {/* File Explorer Toolbar */}
+              <div className="flex items-center justify-between border-b border-slate-800/60 bg-[#162436] p-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 border-r border-slate-700/50 pr-4">
+                    <button 
+                      onClick={() => handleNewItem('file')}
+                      className="p-1.5 text-slate-400 transition-colors hover:text-white" 
+                      title="New File"
+                    >
+                      <FilePlus size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleNewItem('folder')}
+                      className="p-1.5 text-slate-400 transition-colors hover:text-white" 
+                      title="New Folder"
+                    >
+                      <FolderPlus size={18} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 border-r border-slate-700/50 pr-4">
+                    <button className="p-1.5 text-slate-400 transition-colors hover:text-white" title="Upload">
+                      <Upload size={18} />
+                    </button>
+                    <button 
+                      onClick={fetchFiles}
+                      className="p-1.5 text-slate-400 transition-colors hover:text-white" 
+                      title="Refresh"
+                    >
+                      <RefreshCw size={18} />
+                    </button>
+                  </div>
+                  <div className="hidden items-center gap-2 text-xs font-medium tracking-wide text-slate-500 sm:flex">
+                    <span>ROOT</span>
+                    <span>/</span>
+                    <span className="text-slate-300">{workspaceInfo?.name}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center rounded-md bg-slate-900 p-1">
+                    <button className="rounded bg-slate-700 p-1 text-white shadow-sm">
+                      <List size={14} />
+                    </button>
+                    <button className="p-1 text-slate-400 hover:text-slate-300">
+                      <Grid size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Files Table Empty State / List */}
+              {flatFiles.length === 0 ? (
+                <div className="flex min-h-[520px] flex-col items-center justify-center p-12 text-center">
+                  <div className="mb-4 rounded-xl bg-slate-800/40 p-4">
+                    <Folder className="h-12 w-12 text-slate-500" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-medium text-slate-200">No files yet</h3>
+                  <p className="mb-6 text-sm text-slate-400">Create a file or folder to get started with your project.</p>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => handleNewItem('file')}
+                      className="flex items-center gap-2 rounded-md border border-slate-700 bg-transparent px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+                    >
+                      <FilePlus size={16} />
+                      New File
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[520px] w-full overflow-x-auto overflow-y-auto">
+                  <table className="w-full text-left text-sm text-slate-300">
+                    <thead className="border-b border-slate-800/60 bg-[#162436]/50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <tr>
+                        <th className="px-6 py-4 font-medium">Name</th>
+                        <th className="px-6 py-4 font-medium">Type</th>
+                        <th className="px-6 py-4 font-medium">Size</th>
+                        <th className="px-6 py-4 font-medium">Modified</th>
+                        <th className="px-6 py-4 text-right font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {flatFiles.map((file) => (
+                        <tr 
+                          key={file.id} 
+                          className="group transition-colors hover:bg-slate-800/20"
+                        >
+                          <td className="px-6 py-3">
+                            <div 
+                              className="flex cursor-pointer items-center gap-3"
+                              style={{ paddingLeft: `${file.level * 24}px` }}
+                              onClick={() => handleFileSelect(file)}
+                            >
+                              {file.type === 'folder' ? (
+                                <Folder 
+                                  size={18} 
+                                  className={expandedFolders.has(file.id) ? "fill-current text-slate-400" : "text-slate-400"} 
+                                />
+                              ) : (
+                                <FileText size={18} className="text-slate-500" />
+                              )}
+                              <span className={`font-medium ${file.type === 'folder' ? 'text-white' : 'text-slate-300 group-hover:text-cyan-400 transition-colors'}`}>
+                                {file.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-slate-500">
+                            {file.type === 'folder' ? 'Directory' : (file.language || 'File')}
+                          </td>
+                          <td className="px-6 py-3 text-slate-500">
+                            {formatFileSize(file.content)}
+                          </td>
+                          <td className="px-6 py-3 text-slate-500">
+                            {formatDate(file.updated_at)}
+                          </td>
+                          <td className="px-6 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                              {file.type === 'folder' && (
+                                <>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleNewItem('file', file.id); }}
+                                    className="rounded p-1.5 text-slate-500 hover:bg-slate-800 hover:text-white"
+                                    title="New file inside"
+                                  >
+                                    <FilePlus size={16} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleNewItem('folder', file.id); }}
+                                    className="rounded p-1.5 text-slate-500 hover:bg-slate-800 hover:text-white"
+                                    title="New folder inside"
+                                  >
+                                    <FolderPlus size={16} />
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={(e) => handleRename(file, e)}
+                                className="rounded p-1.5 text-slate-500 hover:bg-slate-800 hover:text-white"
+                                title="Rename"
+                              >
+                                <Pencil size={16} />
+                              </button>
+                              <button
+                                onClick={(e) => handleDelete(file, e)}
+                                className="rounded p-1.5 text-slate-500 hover:bg-red-950/50 hover:text-red-400"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Widgets */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="rounded-xl border border-slate-800/60 bg-[#111C28] p-6 text-center">
+                <div className="mb-4 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Active Branch
+                </div>
+                <div className="mb-6 flex items-center justify-center gap-3 text-lg font-medium text-white">
+                  <Code2 size={20} className="text-slate-400" />
+                  main
+                </div>
+                <button className="mx-auto block w-full max-w-[240px] rounded-md bg-slate-800 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white">
+                  Switch Branch
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </main>
       </div>
-      </div> {/* End workspace-main-content */}
 
       {/* File View Modal */}
       {showFileModal && selectedFile && (
-        <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  <i className="bi bi-file-earmark-code me-2"></i>
-                  {selectedFile.name}
-                  <span className="badge bg-secondary ms-2">Read Only</span>
-                </h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setShowFileModal(false)}
-                ></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="flex h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-slate-700 bg-[#111C28] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 bg-[#162436] px-6 py-4">
+              <div className="flex items-center gap-3">
+                <FileText className="text-slate-400" size={20} />
+                <h3 className="text-lg font-medium text-white">{selectedFile.name}</h3>
+                <span className="rounded-md bg-slate-800 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Read Only</span>
               </div>
-              <div className="modal-body">
-                <pre className="file-content-modal">
-                  <code className={`language-${getLanguageForSyntax(selectedFile.language)}`}>
-                    {selectedFile.content || '// Empty file'}
-                  </code>
-                </pre>
-              </div>
-              <div className="modal-footer">
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => setShowFileModal(false)}
-                >
-                  Close
-                </button>
-                <button 
-                  className="btn btn-primary"
-                  onClick={handleOpenEditor}
-                >
-                  <i className="bi bi-pencil-square me-2"></i>
-                  Edit in Editor
-                </button>
-              </div>
+              <button onClick={() => setShowFileModal(false)} className="text-slate-400 hover:text-white">
+                <span aria-hidden="true" className="text-xl leading-none">✕</span>
+                <span className="sr-only">Close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-[#0A1118] p-6 font-mono text-sm text-slate-300">
+              <pre className="whitespace-pre-wrap word-break">
+                <code>{selectedFile.content || '// Empty file'}</code>
+              </pre>
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800 bg-[#162436] px-6 py-4">
+              <button
+                onClick={() => setShowFileModal(false)}
+                className="rounded-md px-4 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleOpenEditor}
+                className="flex items-center gap-2 rounded-md bg-slate-200 px-4 py-2 text-sm font-bold text-slate-900 transition-colors hover:bg-white"
+              >
+                <Code2 size={16} />
+                Edit in Editor
+              </button>
             </div>
           </div>
         </div>
       )}
-      {showFileModal && <div className="modal-backdrop show"></div>}
 
       {/* New Item Modal */}
       {showNewItemModal && (
-        <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  Create New {newItemType === 'file' ? 'File' : 'Folder'}
-                </h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setShowNewItemModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Name"
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && createNewItem()}
-                  autoFocus
-                />
-              </div>
-              <div className="modal-footer">
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => setShowNewItemModal(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="btn btn-primary" 
-                  onClick={createNewItem}
-                >
-                  Create
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-xl border border-slate-700 bg-[#111C28] shadow-2xl">
+            <div className="border-b border-slate-800 px-6 py-4">
+              <h3 className="text-lg font-medium text-white">
+                Create New {newItemType === 'file' ? 'File' : 'Folder'}
+              </h3>
+            </div>
+            <div className="px-6 py-6">
+              <input
+                type="text"
+                placeholder="Name"
+                className="w-full rounded-md border border-slate-700 bg-[#0A1118] px-4 py-2 text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && createNewItem()}
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800 bg-[#162436] px-6 py-4">
+              <button
+                onClick={() => setShowNewItemModal(false)}
+                className="rounded-md px-4 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createNewItem}
+                className="rounded-md bg-slate-200 px-4 py-2 text-sm font-bold text-slate-900 hover:bg-white"
+              >
+                Create
+              </button>
             </div>
           </div>
         </div>
       )}
-      {showNewItemModal && <div className="modal-backdrop show"></div>}
 
-      {/* User Chat Component */}
-      <UserChat 
+      <UserChat
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         workspaceId={workspaceId}

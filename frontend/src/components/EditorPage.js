@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Client from "./Client";
 import Editor from "./Editor";
 import FileExplorer from "./FileExplorer";
@@ -91,6 +91,27 @@ function EditorPage() {
   const { roomId } = useParams();
 
   const socketRef = useRef(null);
+
+  const uniqueWorkspaceMembers = useMemo(() => {
+    const members = workspaceInfo?.collaborators || [];
+    const seen = new Set();
+    return members.filter((member) => {
+      const key = (member?.username || "").trim().toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [workspaceInfo]);
+
+  const uniqueOnlineMembers = useMemo(() => {
+    const seen = new Set();
+    return clients.filter((client) => {
+      const key = (client?.username || "").trim().toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [clients]);
 
   const fetchWorkspaceInfo = async () => {
     try {
@@ -401,16 +422,18 @@ function EditorPage() {
             />
           ) : (
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2 mt-2">Online ({clients.length})</span>
-              {clients.map((client) => (
-                <div key={client.socketId} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-800/50 cursor-default">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2 mt-2">Members ({uniqueWorkspaceMembers.length})</span>
+              {uniqueWorkspaceMembers.map((member) => (
+                <div key={member.id || member.username} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-800/50 cursor-default">
                   <div className="relative">
                     <Avatar className="w-6 h-6 border border-slate-700">
-                      <AvatarFallback className="bg-slate-700 text-[10px]">{client.username.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="bg-slate-700 text-[10px]">{(member.username || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-[#12151E]"></div>
                   </div>
-                  <span className="text-sm text-slate-300 truncate">{client.username}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm text-slate-300 truncate">{member.username}</div>
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wide">{member.role || 'member'}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -556,10 +579,10 @@ function EditorPage() {
 
         {/* Collaborators Context Box */}
         <div className="p-3 border-b border-slate-800 shrink-0 bg-slate-900/20">
-          <span className="text-[10px] font-bold tracking-wider text-slate-500 mb-2 block uppercase">Team ({clients.length})</span>
+          <span className="text-[10px] font-bold tracking-wider text-slate-500 mb-2 block uppercase">Online ({uniqueOnlineMembers.length})</span>
           <div className="flex flex-wrap gap-1.5">
-            {clients.map((client) => (
-              <Avatar key={client.socketId} className="w-6 h-6 border border-[#12151E] ring-1 ring-slate-800 hover:ring-cyan-500 transition-all cursor-pointer" title={client.username}>
+            {uniqueOnlineMembers.map((client) => (
+              <Avatar key={client.socketId || client.username} className="w-6 h-6 border border-[#12151E] ring-1 ring-slate-800 hover:ring-cyan-500 transition-all cursor-pointer" title={client.username}>
                 <AvatarFallback className="bg-gradient-to-br from-slate-700 to-slate-900 text-cyan-200 text-[10px]">
                   {client.username.charAt(0)}
                 </AvatarFallback>
@@ -689,7 +712,7 @@ function EditorPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">Online</span>
-                    <span className="text-sm text-emerald-400 font-medium">{clients.length} member{clients.length !== 1 ? 's' : ''}</span>
+                    <span className="text-sm text-emerald-400 font-medium">{uniqueOnlineMembers.length} member{uniqueOnlineMembers.length !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
               </div>
