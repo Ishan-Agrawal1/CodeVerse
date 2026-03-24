@@ -7,7 +7,9 @@ const {
   createFileOrFolder,
   updateFile,
   renameFileOrFolder,
-  deleteFileOrFolder
+  deleteFileOrFolder,
+  getLanguageStats,
+  getSystemStatus
 } = require('../controllers/fileController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -15,6 +17,12 @@ router.use(protect);
 
 // Get save activity counts for dashboard heatmap
 router.get('/save-activity', getSaveActivity);
+
+// Get language distribution stats
+router.get('/language-stats', getLanguageStats);
+
+// Get system status metrics
+router.get('/system-status', getSystemStatus);
 
 // Get all files and folders for a workspace
 router.get('/:workspaceId/files', getWorkspaceFiles);

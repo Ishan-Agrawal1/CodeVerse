@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const os = require('os');
 
 class FileRepository {
   /**
@@ -239,6 +240,66 @@ class FileRepository {
       return result.affectedRows > 0;
     } catch (error) {
       console.error('Error deleting file/folder:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get language distribution across all workspaces a user has access to
+   * @param {number} userId
+   * @returns {Promise<Array>} Array of { language, file_count }
+   */
+  async getLanguageStats(userId) {
+    try {
+      const [rows] = await pool.query(
+        `SELECT wf.language, COUNT(*) AS file_count
+         FROM workspace_files wf
+         INNER JOIN user_workspaces uw ON wf.workspace_id = uw.workspace_id
+         WHERE uw.user_id = ? AND wf.type = 'file' AND wf.language IS NOT NULL AND wf.language != ''
+         GROUP BY wf.language
+         ORDER BY file_count DESC`,
+        [userId]
+      );
+      return rows;
+    } catch (error) {
+      console.error('Error getting language stats:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get system status metrics (DB pool info + server uptime)
+   * @returns {Promise<Object>} System status metrics
+   */
+  async getSystemStatus() {
+    try {
+      const start = Date.now();
+      await pool.query('SELECT 1');
+      const latency = Date.now() - start;
+
+      // Get active connection count from pool
+      const poolInfo = pool.pool;
+      const activeConnections = poolInfo?._allConnections?.length || 0;
+
+      const uptimeSeconds = process.uptime();
+      const uptimeHours = (uptimeSeconds / 3600).toFixed(1);
+
+      const totalMemory = os.totalmem();
+      const freeMemory = os.freemem();
+      const memoryUsage = (((totalMemory - freeMemory) / totalMemory) * 100).toFixed(1);
+
+      return {
+        dbLatency: `${latency}ms`,
+        dbLatencyStatus: latency < 100 ? 'Optimal' : latency < 300 ? 'Normal' : 'Slow',
+        serverUptime: `${uptimeHours}h`,
+        serverUptimeStatus: 'Stable',
+        activeConnections: activeConnections.toString(),
+        activeConnectionsStatus: activeConnections < 8 ? 'Healthy' : 'High',
+        memoryUsage: `${memoryUsage}%`,
+        memoryUsageStatus: parseFloat(memoryUsage) < 70 ? 'Normal' : parseFloat(memoryUsage) < 90 ? 'Warning' : 'Critical',
+      };
+    } catch (error) {
+      console.error('Error getting system status:', error);
       throw error;
     }
   }

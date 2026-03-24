@@ -246,6 +246,41 @@ const deleteFileOrFolder = async (req, res) => {
   }
 };
 
+const getLanguageStats = async (req, res) => {
+  const userId = Number(req.user.id);
+
+  if (!Number.isFinite(userId)) {
+    return sendBadRequest(res, 'Invalid user context');
+  }
+
+  try {
+    const rows = await fileRepository.getLanguageStats(userId);
+
+    // Calculate percentages
+    const totalFiles = rows.reduce((sum, r) => sum + Number(r.file_count), 0);
+    const stats = rows.map((r) => ({
+      name: r.language,
+      fileCount: Number(r.file_count),
+      percentage: totalFiles > 0 ? Math.round((Number(r.file_count) / totalFiles) * 100) : 0,
+    }));
+
+    sendSuccess(res, { stats, totalFiles });
+  } catch (error) {
+    console.error('Get language stats error:', error);
+    sendError(res, 'Server error fetching language stats');
+  }
+};
+
+const getSystemStatus = async (req, res) => {
+  try {
+    const status = await fileRepository.getSystemStatus();
+    sendSuccess(res, { status });
+  } catch (error) {
+    console.error('Get system status error:', error);
+    sendError(res, 'Server error fetching system status');
+  }
+};
+
 module.exports = {
   getSaveActivity,
   getWorkspaceFiles,
@@ -253,5 +288,7 @@ module.exports = {
   createFileOrFolder,
   updateFile,
   renameFileOrFolder,
-  deleteFileOrFolder
+  deleteFileOrFolder,
+  getLanguageStats,
+  getSystemStatus
 };
