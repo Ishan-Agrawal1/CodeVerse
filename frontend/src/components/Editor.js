@@ -47,7 +47,11 @@ function Editor({
   const editorRef = useRef(null);
   const userCursorsRef = useRef({});
   const showCursorsRef = useRef(showCursors);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Update ref when prop changes
+  useEffect(() => {
+    showCursorsRef.current = showCursors;
+  }, [showCursors]);
 
   // Generate a random color for each user
   const getColorForUser = (socketId) => {
