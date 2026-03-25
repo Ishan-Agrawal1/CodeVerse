@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import "codemirror/mode/javascript/javascript";
 import "codemirror/mode/python/python";
 import "codemirror/mode/clike/clike";
@@ -15,51 +15,68 @@ import "codemirror/addon/edit/closebrackets";
 import "codemirror/lib/codemirror.css";
 import CodeMirror from "codemirror";
 import { ACTIONS } from "../Actions";
-import ChatSidebar from "./ChatSidebar";
 import "./Editor.css";
 
 // Map JDoodle language names to CodeMirror MIME types
 const LANGUAGE_TO_CM_MODE = {
-  python3: 'text/x-python',
-  java: 'text/x-java',
-  cpp: 'text/x-c++src',
-  c: 'text/x-csrc',
-  nodejs: 'text/javascript',
-  ruby: 'text/x-ruby',
-  go: 'text/x-go',
-  rust: 'text/x-rustsrc',
-  php: 'application/x-httpd-php',
-  swift: 'text/x-swift',
-  kotlin: 'text/x-kotlin',
-  scala: 'text/x-scala',
-  r: 'text/x-rsrc',
-  sql: 'text/x-sql',
+  python3: "text/x-python",
+  java: "text/x-java",
+  cpp: "text/x-c++src",
+  c: "text/x-csrc",
+  nodejs: "text/javascript",
+  ruby: "text/x-ruby",
+  go: "text/x-go",
+  rust: "text/x-rustsrc",
+  php: "application/x-httpd-php",
+  swift: "text/x-swift",
+  kotlin: "text/x-kotlin",
+  scala: "text/x-scala",
+  r: "text/x-rsrc",
+  sql: "text/x-sql",
 };
 
-function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language = 'python3', fontSize = 14, wordWrap = true }) {
+function Editor({
+  socketRef,
+  roomId,
+  onCodeChange,
+  showCursors = true,
+  language = "python3",
+  fontSize = 14,
+  wordWrap = true,
+}) {
   const editorRef = useRef(null);
   const userCursorsRef = useRef({});
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Generate a random color for each user
   const getColorForUser = (socketId) => {
     const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
-      '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2',
-      '#F8B739', '#52B788', '#E63946', '#06FFA5'
+      "#FF6B6B",
+      "#4ECDC4",
+      "#45B7D1",
+      "#FFA07A",
+      "#98D8C8",
+      "#F7DC6F",
+      "#BB8FCE",
+      "#85C1E2",
+      "#F8B739",
+      "#52B788",
+      "#E63946",
+      "#06FFA5",
     ];
-    const hash = socketId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = socketId
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
   };
 
   // Create cursor widget
   const createCursorWidget = (username, color) => {
-    const cursorElement = document.createElement('div');
-    cursorElement.className = 'remote-cursor';
+    const cursorElement = document.createElement("div");
+    cursorElement.className = "remote-cursor";
     cursorElement.style.borderLeftColor = color;
 
-    const labelElement = document.createElement('div');
-    labelElement.className = 'cursor-label';
+    const labelElement = document.createElement("div");
+    labelElement.className = "cursor-label";
     labelElement.style.backgroundColor = color;
     labelElement.textContent = username;
 
@@ -72,7 +89,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
     if (!editorRef.current || !showCursors) return;
 
     const color = getColorForUser(socketId);
-    
+
     // Remove old cursor if exists
     if (userCursorsRef.current[socketId]) {
       userCursorsRef.current[socketId].clear();
@@ -82,7 +99,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
     const cursorWidget = createCursorWidget(username, color);
     const cursorMarker = editorRef.current.setBookmark(
       { line: position.line, ch: position.ch },
-      { widget: cursorWidget, insertLeft: true }
+      { widget: cursorWidget, insertLeft: true },
     );
 
     userCursorsRef.current[socketId] = cursorMarker;
@@ -98,7 +115,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
 
   useEffect(() => {
     const init = async () => {
-      const cmMode = LANGUAGE_TO_CM_MODE[language] || 'text/javascript';
+      const cmMode = LANGUAGE_TO_CM_MODE[language] || "text/javascript";
       const editor = CodeMirror.fromTextArea(
         document.getElementById("realtimeEditor"),
         {
@@ -108,13 +125,25 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
           autoCloseBrackets: true,
           lineNumbers: true,
           lineWrapping: wordWrap,
-        }
+        },
       );
       editorRef.current = editor;
 
       editor.setSize(null, "100%");
-      editor.getWrapperElement().style.fontSize = fontSize + 'px';
-      
+      editor.getWrapperElement().style.fontSize = fontSize + "px";
+
+      // Setup resize observer
+      const resizeObserver = new ResizeObserver(() => {
+        editor.setSize(null, "100%");
+        editor.refresh();
+      });
+      const wrapperElement = editor.getWrapperElement();
+      if (wrapperElement && wrapperElement.parentElement) {
+        resizeObserver.observe(wrapperElement.parentElement);
+      }
+      // Attach to editor instance for cleanup
+      editor.resizeObserver = resizeObserver;
+
       // Track code changes
       editorRef.current.on("change", (instance, changes) => {
         const { origin } = changes;
@@ -147,15 +176,15 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
   // Dynamically update CodeMirror mode when language changes
   useEffect(() => {
     if (editorRef.current) {
-      const cmMode = LANGUAGE_TO_CM_MODE[language] || 'text/javascript';
-      editorRef.current.setOption('mode', cmMode);
+      const cmMode = LANGUAGE_TO_CM_MODE[language] || "text/javascript";
+      editorRef.current.setOption("mode", cmMode);
     }
   }, [language]);
 
   // Dynamically update font size
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.getWrapperElement().style.fontSize = fontSize + 'px';
+      editorRef.current.getWrapperElement().style.fontSize = fontSize + "px";
       editorRef.current.refresh();
     }
   }, [fontSize]);
@@ -163,7 +192,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
   // Dynamically update word wrap
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.setOption('lineWrapping', wordWrap);
+      editorRef.current.setOption("lineWrapping", wordWrap);
     }
   }, [wordWrap]);
 
@@ -171,7 +200,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
   useEffect(() => {
     if (!showCursors) {
       // Hide all remote cursors
-      Object.keys(userCursorsRef.current).forEach(socketId => {
+      Object.keys(userCursorsRef.current).forEach((socketId) => {
         if (userCursorsRef.current[socketId]) {
           userCursorsRef.current[socketId].clear();
         }
@@ -190,9 +219,12 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
       });
 
       // Listen for cursor updates from other users
-      socketRef.current.on(ACTIONS.CURSOR_UPDATE, ({ socketId, username, cursorPosition }) => {
-        updateRemoteCursor(socketId, username, cursorPosition);
-      });
+      socketRef.current.on(
+        ACTIONS.CURSOR_UPDATE,
+        ({ socketId, username, cursorPosition }) => {
+          updateRemoteCursor(socketId, username, cursorPosition);
+        },
+      );
 
       // Clean up cursors when users disconnect
       socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId }) => {
@@ -201,41 +233,46 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
     }
 
     return () => {
+      // Cleanup resize observer
+      if (editorRef.current && editorRef.current.resizeObserver) {
+        editorRef.current.resizeObserver.disconnect();
+      }
+
       if (socketRef.current) {
         socketRef.current.off(ACTIONS.CODE_CHANGE);
         socketRef.current.off(ACTIONS.CURSOR_UPDATE);
         socketRef.current.off(ACTIONS.DISCONNECTED);
       }
       // Clear all cursors
-      Object.keys(userCursorsRef.current).forEach(socketId => {
+      Object.keys(userCursorsRef.current).forEach((socketId) => {
         removeRemoteCursor(socketId);
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socketRef.current]);
 
+  // Resize observer to handle editor resizing
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      editorRef.current.setSize(null, "100%");
+      editorRef.current.refresh();
+    });
+
+    const container = document.getElementById("realtimeEditor")?.parentElement;
+    if (container) {
+      resizeObserver.observe(container);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
-    <div style={{ height: "600px", position: "relative" }}>
-      {/* AI Chat Button */}
-      <button
-        className="ai-chat-button"
-        onClick={() => setIsChatOpen(true)}
-        title="Open AI Chat Assistant"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <span>AI Chat</span>
-      </button>
-
+    <div style={{ height: "100%", position: "relative" }}>
       <textarea id="realtimeEditor"></textarea>
-
-      {/* Chat Sidebar */}
-      <ChatSidebar
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        workspaceId={roomId}
-      />
     </div>
   );
 }
