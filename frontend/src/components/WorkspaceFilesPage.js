@@ -27,6 +27,7 @@ import UserChat from './UserChat';
 import { useAuth } from '../contexts/AuthContext';
 import { initSocket } from '../Socket';
 import { ACTIONS } from '../Actions';
+import { API_ENDPOINTS } from '../config/api';
 
 function WorkspaceFilesPage() {
   const { workspaceId } = useParams();
@@ -67,7 +68,7 @@ function WorkspaceFilesPage() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -83,7 +84,7 @@ function WorkspaceFilesPage() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:5000/api/workspaces/${workspaceId}`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -170,7 +171,7 @@ function WorkspaceFilesPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files`,
         {
           name: newItemName,
           type: newItemType,
@@ -202,7 +203,7 @@ function WorkspaceFilesPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files/${file.id}`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files/${file.id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -224,7 +225,7 @@ function WorkspaceFilesPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files/${file.id}/rename`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files/${file.id}/rename`,
         { name: newName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -254,7 +255,7 @@ function WorkspaceFilesPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://localhost:5000/api/workspaces/${workspaceId}`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }

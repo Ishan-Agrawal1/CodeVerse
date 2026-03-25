@@ -1,6 +1,7 @@
   import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+  import { API_ENDPOINTS } from '../config/api';
   import { File, FilePlus, Folder, FolderOpen, FolderPlus, Pencil } from 'lucide-react';
 import './FileExplorer.css';
 
@@ -30,7 +31,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -84,7 +85,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
         try {
           const token = localStorage.getItem('token');
           const response = await axios.get(
-            `http://localhost:5000/api/workspaces/${workspaceId}/files/${file.id}`,
+            `${API_ENDPOINTS.workspaces}/${workspaceId}/files/${file.id}`,
             {
               headers: { Authorization: `Bearer ${token}` }
             }
@@ -145,7 +146,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files`,
         {
           name,
           type,
@@ -182,7 +183,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files/${file.id}`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files/${file.id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -206,7 +207,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `http://localhost:5000/api/workspaces/${workspaceId}/files/${file.id}/rename`,
+        `${API_ENDPOINTS.workspaces}/${workspaceId}/files/${file.id}/rename`,
         { name: newName },
         {
           headers: { Authorization: `Bearer ${token}` }

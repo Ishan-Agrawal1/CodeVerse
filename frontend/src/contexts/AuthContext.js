@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { API_ENDPOINTS } from '../config/api';
 
 const AuthContext = createContext();
 
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
   const [loading, setLoading] = useState(true);
 
-  const API_URL = 'http://localhost:5000/api/auth';
+  const API_URL = API_ENDPOINTS.auth;
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');

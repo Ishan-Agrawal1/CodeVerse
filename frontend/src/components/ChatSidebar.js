@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { API_ENDPOINTS } from "../config/api";
 import "./ChatSidebar.css";
 
 // Code block component with copy functionality
@@ -116,7 +117,7 @@ function ChatSidebar({ isOpen, onClose, workspaceId }) {
       setLoadingHistory(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/ai/chat/${workspaceId}`,
+        `${API_ENDPOINTS.aiChat}/${workspaceId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -172,7 +173,7 @@ function ChatSidebar({ isOpen, onClose, workspaceId }) {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5000/api/ai/chat",
+        API_ENDPOINTS.aiChat,
         {
           workspaceId,
           message: inputMessage,
@@ -220,7 +221,7 @@ function ChatSidebar({ isOpen, onClose, workspaceId }) {
     if (window.confirm("Are you sure you want to clear all chat history?")) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`http://localhost:5000/api/ai/chat/${workspaceId}`, {
+        await axios.delete(`${API_ENDPOINTS.aiChat}/${workspaceId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

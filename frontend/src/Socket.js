@@ -1,4 +1,5 @@
 import {io} from 'socket.io-client';
+import { BACKEND_URL } from './config/api';
 
 export const initSocket = async () =>{
     const options = {
@@ -7,5 +8,5 @@ export const initSocket = async () =>{
         timeout: 10000,
         transports: ['websocket'],
     };
-    return io(process.env.REACT_APP_BACKEND_URL, options);
+    return io(BACKEND_URL, options);
 }

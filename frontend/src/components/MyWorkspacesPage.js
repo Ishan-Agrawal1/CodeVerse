@@ -18,6 +18,7 @@ import CreateWorkspaceModal from './CreateWorkspaceModal';
 import JoinWorkspaceModal from './JoinWorkspaceModal';
 import Button from './ui/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { API_ENDPOINTS } from '../config/api';
 
 function MyWorkspacesPage() {
   const [workspaces, setWorkspaces] = useState([]);
@@ -27,7 +28,7 @@ function MyWorkspacesPage() {
   const navigate = useNavigate();
   const { token, user } = useAuth();
 
-  const API_URL = 'http://localhost:5000/api/workspaces';
+  const API_URL = API_ENDPOINTS.workspaces;
 
   const fetchWorkspaces = useCallback(async () => {
     try {

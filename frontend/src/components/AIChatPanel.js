@@ -6,6 +6,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Send, Check, Copy, Bot, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from './ui/Avatar';
+import { API_ENDPOINTS } from '../config/api';
 
 function CodeBlock({ language, value }) {
   const [copied, setCopied] = useState(false);
@@ -74,7 +75,7 @@ export default function AIChatPanel({ workspaceId }) {
       setLoadingHistory(true);
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:5000/api/ai/chat/${workspaceId}`,
+        `${API_ENDPOINTS.aiChat}/${workspaceId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -126,7 +127,7 @@ export default function AIChatPanel({ workspaceId }) {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/ai/chat',
+        API_ENDPOINTS.aiChat,
         { workspaceId, message: currentMsg },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
@@ -159,7 +160,7 @@ export default function AIChatPanel({ workspaceId }) {
     if (window.confirm('Are you sure you want to clear all chat history?')) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/api/ai/chat/${workspaceId}`, {
+        await axios.delete(`${API_ENDPOINTS.aiChat}/${workspaceId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMessages([]);

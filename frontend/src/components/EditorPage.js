@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
 import AIChatPanel from "./AIChatPanel";
 import VersionHistory from "./VersionHistory";
 import { useAuth } from "../contexts/AuthContext";
+import { API_ENDPOINTS } from "../config/api";
 import {
   Terminal, Play, Save, Users, Folder, MessageSquare,
   Settings, Bell, LogOut, Copy, Trash2, Code2, Bug, Share2,
@@ -194,7 +195,7 @@ function EditorPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/workspaces/${roomId}`,
+        `${API_ENDPOINTS.workspaces}/${roomId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -316,7 +317,7 @@ function EditorPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.patch(
-        `http://localhost:5000/api/workspaces/${roomId}/files/${currentFile.id}`,
+        `${API_ENDPOINTS.workspaces}/${roomId}/files/${currentFile.id}`,
         {
           content: codeRef.current,
           language: selectedLanguage,
@@ -341,7 +342,7 @@ function EditorPage() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/workspaces/${roomId}`, {
+      await axios.delete(`${API_ENDPOINTS.workspaces}/${roomId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Workspace deleted permanently for all users");
@@ -362,7 +363,7 @@ function EditorPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `http://localhost:5000/api/workspaces/${roomId}/leave`,
+        `${API_ENDPOINTS.workspaces}/${roomId}/leave`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -384,7 +385,7 @@ function EditorPage() {
     setIsCompiling(true);
     setIsCompileWindowOpen(true);
     try {
-      const response = await axios.post("http://localhost:5000/compile", {
+      const response = await axios.post(API_ENDPOINTS.compile, {
         code: codeRef.current,
         language: selectedLanguage,
       });
@@ -984,7 +985,7 @@ function EditorPage() {
             // Re-fetch file content after restore
             const token = localStorage.getItem('token');
             axios.get(
-              `http://localhost:5000/api/workspaces/${roomId}/files/${currentFile.id}`,
+              `${API_ENDPOINTS.workspaces}/${roomId}/files/${currentFile.id}`,
               { headers: { Authorization: `Bearer ${token}` } }
             ).then(res => {
               const file = res.data.file;

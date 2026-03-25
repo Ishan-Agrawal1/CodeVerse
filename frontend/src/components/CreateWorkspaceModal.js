@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { FolderPlus, X, CheckCircle, Code } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 function CreateWorkspaceModal({ show, onHide, onSuccess }) {
   const [name, setName] = useState('');
@@ -11,7 +12,7 @@ function CreateWorkspaceModal({ show, onHide, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
 
-  const API_URL = 'http://localhost:5000/api/workspaces';
+  const API_URL = API_ENDPOINTS.workspaces;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -27,6 +27,7 @@ import Navbar from './Navbar';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 import JoinWorkspaceModal from './JoinWorkspaceModal';
 import { useAuth } from '../contexts/AuthContext';
+import { API_ENDPOINTS } from '../config/api';
 import './Dashboard.css';
 
 function Dashboard() {
@@ -42,7 +43,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const { token, user, isAuthenticated, logout, loading: authLoading } = useAuth();
 
-  const API_URL = 'http://localhost:5000/api/workspaces';
+  const API_URL = API_ENDPOINTS.workspaces;
   const HEATMAP_DAYS = 140;
 
   const activeUsers = [

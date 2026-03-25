@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { History, X, RotateCcw, Tag, Eye, GitCompare, Clock, User } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 import './VersionHistory.css';
 
-const API = 'http://localhost:5000/api/workspaces';
+const API = API_ENDPOINTS.workspaces;
 
 function computeDiff(oldText, newText) {
   const oldLines = (oldText || '').split('\n');
