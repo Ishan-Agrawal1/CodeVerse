@@ -1,4 +1,5 @@
 const fileRepository = require('../repositories/fileRepository');
+const versionRepository = require('../repositories/versionRepository');
 const { checkWorkspaceAccess } = require('../utils/accessControl');
 const { sendSuccess, sendError, sendCreated, sendNotFound, sendForbidden, sendBadRequest } = require('../utils/responseFormatter');
 
@@ -152,6 +153,10 @@ const updateFile = async (req, res) => {
 
     // Track save event (non-blocking)
     await fileRepository.addSaveEvent(workspaceId, fileId, userId);
+
+    // Auto-create version snapshot (non-blocking)
+    versionRepository.createVersion(fileId, workspaceId, content, language, userId)
+      .catch(err => console.error('Auto-version creation failed:', err));
 
     sendSuccess(res, null, 'File updated successfully');
   } catch (error) {
