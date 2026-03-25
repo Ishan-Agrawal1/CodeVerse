@@ -24,7 +24,7 @@ function CreateWorkspaceModal({ show, onHide, onSuccess }) {
 
     setLoading(true);
     try {
-      const response = await axios.post(
+      await axios.post(
         API_URL,
         {
           name: name.trim(),

@@ -217,16 +217,18 @@ function Editor({
   }, [showCursors]);
 
   useEffect(() => {
-    if (socketRef.current) {
+    const socket = socketRef.current;
+
+    if (socket) {
       // Listen for code changes
-      socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+      socket.on(ACTIONS.CODE_CHANGE, ({ code }) => {
         if (code !== null) {
           editorRef.current.setValue(code);
         }
       });
 
       // Listen for cursor updates from other users
-      socketRef.current.on(
+      socket.on(
         ACTIONS.CURSOR_UPDATE,
         ({ socketId, username, cursorPosition }) => {
           updateRemoteCursor(socketId, username, cursorPosition);
@@ -234,7 +236,7 @@ function Editor({
       );
 
       // Clean up cursors when users disconnect
-      socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId }) => {
+      socket.on(ACTIONS.DISCONNECTED, ({ socketId }) => {
         removeRemoteCursor(socketId);
       });
     }
@@ -245,10 +247,10 @@ function Editor({
         editorRef.current.resizeObserver.disconnect();
       }
 
-      if (socketRef.current) {
-        socketRef.current.off(ACTIONS.CODE_CHANGE);
-        socketRef.current.off(ACTIONS.CURSOR_UPDATE);
-        socketRef.current.off(ACTIONS.DISCONNECTED);
+      if (socket) {
+        socket.off(ACTIONS.CODE_CHANGE);
+        socket.off(ACTIONS.CURSOR_UPDATE);
+        socket.off(ACTIONS.DISCONNECTED);
       }
       // Clear all cursors
       Object.keys(userCursorsRef.current).forEach((socketId) => {

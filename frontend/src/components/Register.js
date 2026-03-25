@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, MailPlus, ShieldPlus, UserPlus2, User, Mail, ShieldCheck, TerminalSquare } from 'lucide-react';
+import { ArrowLeft, UserPlus2, User, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 

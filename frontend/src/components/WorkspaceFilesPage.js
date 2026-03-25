@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -16,8 +16,6 @@ import {
   FileText,
   UserPlus,
   HelpCircle,
-  Activity,
-  CheckCircle2,
   List,
   Grid,
   Pencil
@@ -46,13 +44,7 @@ function WorkspaceFilesPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const socketRef = useRef(null);
 
-  useEffect(() => {
-    fetchWorkspaceInfo();
-    fetchFiles();
-    initializeSocket();
-  }, [workspaceId]);
-
-  const initializeSocket = async () => {
+  const initializeSocket = useCallback(async () => {
     try {
       socketRef.current = await initSocket();
       socketRef.current.emit(ACTIONS.JOIN, {
@@ -62,9 +54,9 @@ function WorkspaceFilesPage() {
     } catch (error) {
       console.error('Socket connection error:', error);
     }
-  };
+  }, [workspaceId, user?.username]);
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
@@ -78,9 +70,9 @@ function WorkspaceFilesPage() {
       console.error('Error fetching files:', error);
       toast.error('Failed to load files');
     }
-  };
+  }, [workspaceId]);
 
-  const fetchWorkspaceInfo = async () => {
+  const fetchWorkspaceInfo = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
@@ -96,7 +88,13 @@ function WorkspaceFilesPage() {
       toast.error('Failed to load workspace');
       navigate('/');
     }
-  };
+  }, [workspaceId, navigate]);
+
+  useEffect(() => {
+    fetchWorkspaceInfo();
+    fetchFiles();
+    initializeSocket();
+  }, [fetchWorkspaceInfo, fetchFiles, initializeSocket]);
 
   const copyWorkspaceId = () => {
     navigator.clipboard.writeText(workspaceId);

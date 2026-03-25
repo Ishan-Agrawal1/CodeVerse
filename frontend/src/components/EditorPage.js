@@ -2,10 +2,8 @@ import React, {
   useEffect,
   useRef,
   useState,
-  useCallback,
   useMemo,
 } from "react";
-import Client from "./Client";
 import Editor from "./Editor";
 import FileExplorer from "./FileExplorer";
 import UserChat from "./UserChat";
@@ -20,16 +18,16 @@ import {
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { Button } from "./ui/Button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
+import { Avatar, AvatarFallback } from "./ui/Avatar";
 import AIChatPanel from "./AIChatPanel";
 import VersionHistory from "./VersionHistory";
 import { useAuth } from "../contexts/AuthContext";
 import { API_ENDPOINTS } from "../config/api";
 import {
   Terminal, Play, Save, Users, Folder, MessageSquare,
-  Settings, Bell, LogOut, Copy, Trash2, Code2, Bug, Share2,
+  Settings, Bell, LogOut, Copy, Trash2, Code2, Share2,
   X, User, Monitor, Type, WrapText, Eye, ChevronDown,
-  Home, LayoutDashboard, History
+  LayoutDashboard, History
 } from "lucide-react";
 
 // File extension → JDoodle language mapping
@@ -271,10 +269,6 @@ function EditorPage() {
       console.log(error);
       toast.error("Unable to copy the room ID");
     }
-  };
-
-  const leaveRoom = async () => {
-    navigate("/");
   };
 
   const handleFileSelect = (file) => {

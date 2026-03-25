@@ -5,18 +5,15 @@ import toast from 'react-hot-toast';
 import {
   ArrowRight,
   Clock3,
-  Code,
   FolderKanban,
   PlusCircle,
   Trash2,
-  UserPlus,
   Users,
   UserX,
 } from 'lucide-react';
 import Navbar from './Navbar';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 import JoinWorkspaceModal from './JoinWorkspaceModal';
-import Button from './ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { API_ENDPOINTS } from '../config/api';
 
@@ -44,7 +41,7 @@ function MyWorkspacesPage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, API_URL]);
 
   useEffect(() => {
     fetchWorkspaces();
@@ -111,19 +108,6 @@ function MyWorkspacesPage() {
     } catch (error) {
       console.error('Error leaving workspace:', error);
       toast.error(error.response?.data?.error || 'Failed to leave workspace');
-    }
-  };
-
-  const getRoleBadgeClass = (role) => {
-    switch (role) {
-      case 'owner':
-        return 'bg-primary';
-      case 'collaborator':
-        return 'bg-success';
-      case 'viewer':
-        return 'bg-secondary';
-      default:
-        return 'bg-info';
     }
   };
 
@@ -298,9 +282,9 @@ function MyWorkspacesPage() {
         <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-4 px-4 text-xs font-medium tracking-widest text-slate-500 sm:flex-row md:px-8">
           <span>© 2024 CODEVERSE ARCHITECTURAL UI. SYSTEM BUILD V4.2.0</span>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-slate-300 transition-colors">DOCUMENTATION</a>
-            <a href="#" className="hover:text-slate-300 transition-colors">API STATUS</a>
-            <a href="#" className="hover:text-slate-300 transition-colors">PRIVACY</a>
+            <span className="hover:text-slate-300 transition-colors">DOCUMENTATION</span>
+            <span className="hover:text-slate-300 transition-colors">API STATUS</span>
+            <span className="hover:text-slate-300 transition-colors">PRIVACY</span>
           </div>
         </div>
       </footer>

@@ -1,4 +1,4 @@
-  import React, { useState, useEffect, useRef } from 'react';
+  import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
   import { API_ENDPOINTS } from '../config/api';
@@ -16,18 +16,7 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
   const [inlineInputValue, setInlineInputValue] = useState('');
   const inlineInputRef = useRef(null);
 
-  useEffect(() => {
-    fetchFiles();
-  }, [workspaceId]);
-
-  // Auto-focus the inline input when it appears
-  useEffect(() => {
-    if (inlineInput && inlineInputRef.current) {
-      inlineInputRef.current.focus();
-    }
-  }, [inlineInput]);
-
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
@@ -41,7 +30,18 @@ const FileExplorer = ({ workspaceId, onFileSelect, onOpenInEditor }) => {
       console.error('Error fetching files:', error);
       toast.error('Failed to load files');
     }
-  };
+  }, [workspaceId]);
+
+  useEffect(() => {
+    fetchFiles();
+  }, [fetchFiles]);
+
+  // Auto-focus the inline input when it appears
+  useEffect(() => {
+    if (inlineInput && inlineInputRef.current) {
+      inlineInputRef.current.focus();
+    }
+  }, [inlineInput]);
 
   const buildFileTree = (files) => {
     const fileMap = new Map();

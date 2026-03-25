@@ -5,11 +5,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
   Activity,
-  BarChart3,
-  CalendarClock,
   Code,
   FolderKanban,
-  GitBranch,
   GitCommitHorizontal,
   Globe,
   LayoutDashboard,
@@ -46,19 +43,6 @@ function Dashboard() {
   const API_URL = API_ENDPOINTS.workspaces;
   const HEATMAP_DAYS = 140;
 
-  const activeUsers = [
-    { name: 'Asha', role: 'Frontend', status: 'editing Dashboard.js' },
-    { name: 'Ravi', role: 'Backend', status: 'reviewing aiController.js' },
-    { name: 'Mira', role: 'DevOps', status: 'running deployment checks' },
-    { name: 'Kian', role: 'QA', status: 'validating workspace routes' },
-  ];
-
-  const versionEvents = [
-    { version: 'v0.9.0', note: 'Introduced workspace sharing and invite flow', date: 'Mar 15' },
-    { version: 'v0.9.1', note: 'Improved file operations and session persistence', date: 'Mar 16' },
-    { version: 'v1.0.0-beta', note: 'Dashboard analytics and collaboration view', date: 'Mar 17' },
-  ];
-
   const getDateKey = (date) => {
     const year = date.getFullYear();
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
@@ -82,7 +66,7 @@ function Dashboard() {
       },
     });
     setWorkspaces(response.data.workspaces || []);
-  }, [token]);
+  }, [token, API_URL]);
 
   const fetchSaveActivity = useCallback(async () => {
     const response = await axios.get(`${API_URL}/save-activity?days=${HEATMAP_DAYS}`, {
@@ -91,21 +75,21 @@ function Dashboard() {
       },
     });
     setSaveActivityCounts(response.data.counts || {});
-  }, [token]);
+  }, [token, API_URL]);
 
   const fetchLanguageStats = useCallback(async () => {
     const response = await axios.get(`${API_URL}/language-stats`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setLanguageStats(response.data.stats || []);
-  }, [token]);
+  }, [token, API_URL]);
 
   const fetchSystemStatus = useCallback(async () => {
     const response = await axios.get(`${API_URL}/system-status`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setSystemStatusData(response.data.status || null);
-  }, [token]);
+  }, [token, API_URL]);
 
   useEffect(() => {
     if (authLoading) {
@@ -720,7 +704,6 @@ function Dashboard() {
               </div>
               <div className="activity-feed flex-1">
                 {activityFeed.map((item) => {
-                  const Icon = item.icon;
                   return (
                     <div className="activity-feed__item hover:cursor-pointer p-2!" style={{ padding: '0.6rem 0.8rem' }} key={item.id} onClick={() => navigate(item.id !== 'empty-state' ? `/workspaces` : '/')}>
                       <div>
