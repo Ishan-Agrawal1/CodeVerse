@@ -123,6 +123,39 @@ async function setupDatabase() {
     console.log('File save events table created successfully');
 
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS file_versions (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        file_id INT NOT NULL,
+        workspace_id VARCHAR(36) NOT NULL,
+        content LONGTEXT,
+        language VARCHAR(50),
+        version_number INT NOT NULL,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (file_id) REFERENCES workspace_files(id) ON DELETE CASCADE,
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_file_versions (file_id, version_number),
+        INDEX idx_workspace_versions (workspace_id)
+      )
+    `);
+    console.log('File versions table created successfully');
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS version_labels (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        version_id BIGINT NOT NULL,
+        label VARCHAR(100) NOT NULL,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (version_id) REFERENCES file_versions(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_version_label (version_id, label)
+      )
+    `);
+    console.log('Version labels table created successfully');
+
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS chat_messages (
         id INT PRIMARY KEY AUTO_INCREMENT,
         workspace_id VARCHAR(36) NOT NULL,

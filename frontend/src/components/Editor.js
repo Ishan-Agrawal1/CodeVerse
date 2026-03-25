@@ -39,6 +39,7 @@ const LANGUAGE_TO_CM_MODE = {
 function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language = 'python3', fontSize = 14, wordWrap = true }) {
   const editorRef = useRef(null);
   const userCursorsRef = useRef({});
+  const showCursorsRef = useRef(showCursors);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Generate a random color for each user
@@ -69,7 +70,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
 
   // Update remote cursor position
   const updateRemoteCursor = (socketId, username, position) => {
-    if (!editorRef.current || !showCursors) return;
+    if (!editorRef.current || !showCursorsRef.current) return;
 
     const color = getColorForUser(socketId);
     
@@ -130,7 +131,7 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
 
       // Track cursor position changes
       editorRef.current.on("cursorActivity", () => {
-        if (showCursors) {
+        if (showCursorsRef.current) {
           const cursor = editorRef.current.getCursor();
           socketRef.current.emit(ACTIONS.CURSOR_POSITION, {
             roomId,
@@ -167,8 +168,9 @@ function Editor({ socketRef, roomId, onCodeChange, showCursors = true, language 
     }
   }, [wordWrap]);
 
-  // Handle cursor visibility toggle
+  // Keep ref in sync with prop
   useEffect(() => {
+    showCursorsRef.current = showCursors;
     if (!showCursors) {
       // Hide all remote cursors
       Object.keys(userCursorsRef.current).forEach(socketId => {

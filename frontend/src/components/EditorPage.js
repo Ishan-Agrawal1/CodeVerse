@@ -16,12 +16,13 @@ import axios from "axios";
 import { Button } from "./ui/Button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
 import AIChatPanel from "./AIChatPanel";
+import VersionHistory from "./VersionHistory";
 import { useAuth } from "../contexts/AuthContext";
 import {
   Terminal, Play, Save, Users, Folder, MessageSquare,
   Settings, Bell, LogOut, Copy, Trash2, Code2, Bug, Share2,
   X, User, Monitor, Type, WrapText, Eye, ChevronDown,
-  Home, LayoutDashboard
+  Home, LayoutDashboard, History
 } from "lucide-react";
 
 // File extension → JDoodle language mapping
@@ -75,6 +76,7 @@ function EditorPage() {
   const [workspaceInfo, setWorkspaceInfo] = useState(null);
   const [showCursors, setShowCursors] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
     return parseInt(localStorage.getItem('cv_fontSize') || '14', 10);
@@ -373,6 +375,13 @@ function EditorPage() {
             title="Team Chat"
           >
             <MessageSquare className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setIsVersionHistoryOpen(!isVersionHistoryOpen)}
+            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isVersionHistoryOpen ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+            title="Version History"
+          >
+            <History className="w-5 h-5" />
           </button>
         </div>
         <div className="mt-auto flex flex-col gap-2 w-full px-2">
@@ -737,6 +746,37 @@ function EditorPage() {
         workspaceId={roomId}
         socketRef={socketRef}
         workspaceInfo={workspaceInfo}
+      />
+
+      {/* Version History Panel */}
+      <VersionHistory
+        isOpen={isVersionHistoryOpen}
+        onClose={(reason) => {
+          setIsVersionHistoryOpen(false);
+          if (reason === 'restored' && currentFile) {
+            // Re-fetch file content after restore
+            const token = localStorage.getItem('token');
+            axios.get(
+              `http://localhost:5000/api/workspaces/${roomId}/files/${currentFile.id}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            ).then(res => {
+              const file = res.data.file;
+              if (file) {
+                setCurrentFile(file);
+                codeRef.current = file.content || '';
+                if (socketRef.current) {
+                  socketRef.current.emit(ACTIONS.SYNC_CODE, {
+                    code: file.content || '',
+                    socketId: socketRef.current.id
+                  });
+                }
+              }
+            }).catch(err => console.error('Error refreshing file after restore:', err));
+          }
+        }}
+        workspaceId={roomId}
+        currentFile={currentFile}
+        currentContent={codeRef.current || ''}
       />
     </div>
   );

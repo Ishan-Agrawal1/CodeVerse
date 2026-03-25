@@ -11,6 +11,7 @@ const { initializeDatabase } = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const workspaceRoutes = require("./routes/workspaceRoutes");
 const fileRoutes = require("./routes/fileRoutes");
+const versionRoutes = require("./routes/versionRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const { cleanupExpiredSessions } = require("./utils/sessionManager");
 
@@ -38,6 +39,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 app.use('/api/workspaces', fileRoutes);
+
+app.use('/api/workspaces', versionRoutes);
 
 app.use('/api/workspaces', workspaceRoutes);
 
