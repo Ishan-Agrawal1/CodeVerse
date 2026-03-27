@@ -86,7 +86,7 @@ function WorkspaceFilesPage() {
     } catch (error) {
       console.error('Error fetching workspace info:', error);
       toast.error('Failed to load workspace');
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [workspaceId, navigate]);
 
@@ -259,7 +259,7 @@ function WorkspaceFilesPage() {
         }
       );
       toast.success('Workspace deleted permanently for all users');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error deleting workspace:', error);
       toast.error(error.response?.data?.error || 'Failed to delete workspace');
@@ -296,7 +296,7 @@ function WorkspaceFilesPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#0A1118]">
+      <div className="flex min-h-screen flex-col bg-[#0a0c10]">
         <Navbar />
         <div className="flex h-[calc(100vh-64px)] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"></div>
@@ -309,7 +309,7 @@ function WorkspaceFilesPage() {
   const flatFiles = flattenFileTree(fileTree);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0A1118]">
+    <div className="flex min-h-screen flex-col bg-[#0a0c10]">
       <Navbar />
 
       <div className="flex flex-1 overflow-hidden">
@@ -565,23 +565,6 @@ function WorkspaceFilesPage() {
                 </div>
               )}
             </div>
-
-            {/* Bottom Widgets */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="rounded-xl border border-slate-800/60 bg-[#111C28] p-6 text-center">
-                <div className="mb-4 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Active Branch
-                </div>
-                <div className="mb-6 flex items-center justify-center gap-3 text-lg font-medium text-white">
-                  <Code2 size={20} className="text-slate-400" />
-                  main
-                </div>
-                <button className="mx-auto block w-full max-w-[240px] rounded-md bg-slate-800 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white">
-                  Switch Branch
-                </button>
-              </div>
-            </div>
-
           </div>
         </main>
       </div>

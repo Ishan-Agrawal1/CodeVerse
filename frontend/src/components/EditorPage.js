@@ -423,7 +423,7 @@ function EditorPage() {
       <div className="w-14 shrink-0 bg-[#0A0D14] border-r border-slate-800 flex flex-col items-center py-3 z-20">
         <div className="w-8 h-8 mb-4">
           <img
-            src="/images/codeverse.png"
+            src="/images/logo.png"
             alt="CV"
             className="w-full h-full object-contain"
           />
@@ -460,7 +460,7 @@ function EditorPage() {
         </div>
         <div className="mt-auto flex flex-col gap-2 w-full px-2">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all"
             title="Home / Dashboard"
           >

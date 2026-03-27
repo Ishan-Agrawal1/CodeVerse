@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { DoorOpen, Home, LogOut, UserCircle2 } from 'lucide-react';
+import { DoorOpen, LayoutDashboard, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './ui/Button';
 
@@ -15,10 +15,14 @@ function Navbar() {
   };
 
   const handleHome = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
-  const isHome = location.pathname === '/';
+  const handleDashboard = () => {
+    navigate(isAuthenticated ? '/dashboard' : '/login');
+  };
+
+  const isDashboard = location.pathname === '/dashboard';
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-[#0D1B2A]/90 backdrop-blur-md">
@@ -35,13 +39,14 @@ function Navbar() {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {!isHome && (
+          {!isDashboard && (
             <button 
-              onClick={handleHome}
-              className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              onClick={handleDashboard}
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all"
+              title="Dashboard"
             >
-              <Home size={16} />
-              <span className="hidden sm:inline">Dashboard</span>
+              <LayoutDashboard className="w-5 h-5" />
+              <span className="sr-only">Dashboard</span>
             </button>
           )}
 
@@ -60,17 +65,11 @@ function Navbar() {
 
           {isAuthenticated && (
             <div className="flex items-center gap-3 sm:gap-4 ml-2 sm:ml-4 border-l border-slate-700 pl-2 sm:pl-4">
-              <div className="flex items-center gap-2 text-sm text-slate-300 hidden sm:flex">
-                <UserCircle2 size={16} className="text-slate-400" />
-                <span className="opacity-75">Hey,</span>
-                <span className="font-semibold text-white truncate max-w-[120px]">{user?.username || 'User'}</span>
-              </div>
               <button 
                 onClick={handleLogout} 
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all shadow-sm"
+                className="px-4 py-1.5 bg-[#1E293B] hover:bg-[#334155] border border-slate-700/50 text-xs font-bold text-slate-300 tracking-wider uppercase rounded-sm transition-all"
               >
-                <LogOut size={16} />
-                <span className="hidden sm:inline">Logout</span>
+                Logout
               </button>
             </div>
           )}

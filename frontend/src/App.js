@@ -1,5 +1,6 @@
 import './App.css';
 import { Routes, Route } from "react-router-dom";
+import LandingPage from './components/LandingPage';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import MyWorkspacesPage from './components/MyWorkspacesPage';
@@ -18,9 +19,14 @@ function App() {
         <Toaster position='top-center'></Toaster>
       </div>
       <Routes>
+        <Route path='/' element={<LandingPage />} />
+        <Route path='/dashboard' element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
-        <Route path='/' element={<Dashboard />} />
         <Route path='/workspaces' element={
           <ProtectedRoute>
             <MyWorkspacesPage />

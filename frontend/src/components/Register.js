@@ -37,7 +37,7 @@ function Register() {
     setIsLoading(false);
 
     if (result.success) {
-      navigate('/');
+      navigate('/dashboard');
     }
   };
 

@@ -426,13 +426,13 @@ function Dashboard() {
       {/* Slim Sidebar matching Editor / Reference Image */}
       <aside className="dashboard-sidebar z-20">
         <div className="dashboard-sidebar-container">
-          <div className="w-10 h-10 mt-2 mb-6 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="w-10 h-10 mt-2 mb-6 cursor-pointer" onClick={() => navigate('/dashboard')}>
             <img src="/images/logo.png" alt="CV" className="w-full h-full object-contain hover:scale-105 transition-transform" />
           </div>
 
           <div className="flex flex-col gap-3 w-full px-2">
             <button
-              onClick={() => handleSidebarNav('/')}
+              onClick={() => handleSidebarNav('/dashboard')}
               className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center transition-all bg-[#1A1F2E] text-cyan-400 border border-slate-700/50 shadow-[0_0_15px_rgba(6,182,212,0.1)] group relative"
               title="Dashboard"
             >
@@ -489,7 +489,7 @@ function Dashboard() {
             </span>
 
             <nav className="flex items-center gap-6 hidden md:flex">
-              <span className="text-sm font-medium text-slate-400 hover:text-white cursor-pointer transition-colors">Home</span>
+              <span className="text-sm font-medium text-slate-400 hover:text-white cursor-pointer transition-colors" onClick={() => navigate('/')}>Home</span>
               <span className="text-sm font-bold text-cyan-400 border-b-2 border-cyan-400 pb-1 cursor-pointer">Dashboard</span>
               <span className="text-sm font-medium text-slate-400 hover:text-white cursor-pointer transition-colors" onClick={() => navigate('/workspaces')}>Workspaces</span>
             </nav>
