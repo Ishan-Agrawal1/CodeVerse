@@ -7,7 +7,7 @@ import Button from './ui/Button';
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
     await logout();
