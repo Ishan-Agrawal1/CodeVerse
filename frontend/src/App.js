@@ -1,7 +1,7 @@
 import './App.css';
 import { Routes, Route } from "react-router-dom";
 import LandingPage from './components/LandingPage';
-import Home from './components/Home';
+
 import Dashboard from './components/Dashboard';
 import MyWorkspacesPage from './components/MyWorkspacesPage';
 import EditorPage from './components/EditorPage';
@@ -37,11 +37,7 @@ function App() {
             <WorkspaceFilesPage />
           </ProtectedRoute>
         } />
-        <Route path='/legacy' element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        } />
+
         <Route path='/editor/:roomId' element={
           <ProtectedRoute>
             <EditorPage />
