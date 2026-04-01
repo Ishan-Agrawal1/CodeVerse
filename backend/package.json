@@ -4,7 +4,9 @@
   "description": "the is a realtime codeshare",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --verbose --forceExit",
+    "test:auth": "jest tests/unit/authController.test.js tests/unit/authMiddleware.test.js --verbose --forceExit",
+    "test:file": "jest tests/unit/fileController.test.js tests/unit/accessControl.test.js --verbose --forceExit",
     "start": "nodemon index.js",
     "setup-db": "node setupDatabase.js"
   },
@@ -28,5 +30,8 @@
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2",
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
   }
 }
